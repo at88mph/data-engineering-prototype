@@ -1,7 +1,8 @@
 import airflow
+import logging
 
-from airflow.hooks.base_hook import BaseHook
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.http_operator import SimpleHttpOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.docker_operator import DockerOperator
 from airflow.models import DAG
@@ -10,6 +11,20 @@ from datetime import timedelta
 from urllib import parse as parse
 from urllib import request as request
 
+
+config = {'working_directory': '/root/airflow',
+          'netrc_filename': '/root/airflow/test_netrc',
+          'resource_id': 'ivo://cadc.nrc.ca/sc2repo',
+          'use_local_files': False,
+          'logging_level': 'INFO',
+          'task_types': 'TaskType.INGEST'}
+
+limit = "1000"
+
+
+def do_that(**kwargs):
+    logging.error(config)
+    logging.error(kwargs['artifact'])
 
 args = {
     'owner': 'airflow',
@@ -30,10 +45,6 @@ default_args = {
 poc_dag = DAG(dag_id='poc', default_args=default_args, schedule_interval=None)
 
 
-conn_hook = BaseHook(source=None)
-conn = conn_hook.get_connection('test_netrc')
-
-
 def get_observations(**kwargs):
     query_meta = "SELECT Artifact.uri " \
                  "FROM caom2.Artifact AS Artifact " \
@@ -43,7 +54,7 @@ def get_observations(**kwargs):
                  "ON Plane.obsID = Observation.obsID " \
                  "WHERE Observation.collection = 'OMM' " \
                  "AND Artifact.uri not like '%jpg' " \
-                 "LIMIT 10"
+                 "LIMIT " + limit
     data = {"QUERY": query_meta, "REQUEST": "doQuery", "LANG": "ADQL",
             "FORMAT": "csv"}
     url = "http://sc2.canfar.net/sc2tap/sync?{}".format(parse.urlencode(data))
@@ -60,15 +71,23 @@ def get_observations(**kwargs):
 
 def caom_commands(artifact, **kwargs):
     uri_list = "{{ task_instance.xcom_pull(task_ids='get_observations') }}"
-    x = DockerOperator(docker_url='unix:///var/run/docker.sock',
-                       command='omm_run_single {} {} {}'.format(
-                           artifact, conn.login, conn.password),
-                       image='omm_run_int',
+    # return PythonOperator(python_callable=do_that, provide_context=True,
+    #                       task_id='meta_{}'.format(artifact),
+    #                       dag=poc_dag, op_kwargs={'artifact': artifact})
+
+    # file not found error
+    # x = DockerOperator(docker_url='unix:///var/run/docker.sock',
+    # connection refused
+    # x = DockerOperator(docker_url='tcp://localhost:2375',
+    # connection refused
+    x = DockerOperator(docker_url='tcp://localhost:2376',
+                       command='omm_run {}'.format(artifact),
+                       image='opencadc/omm2caom2',
                        network_mode='bridge',
                        task_id='meta_{}'.format(artifact),
+                       docker_conn_id='my_docker',
                        dag=poc_dag)
     return x
-
 
 uri_list = PythonOperator(
     task_id='get_observations',
