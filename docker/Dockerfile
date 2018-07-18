@@ -15,38 +15,41 @@
 #  specific language governing permissions and limitations      *
 #  under the License.                                           *
 
-FROM ubuntu:16.04
+FROM python:3.6-stretch
+
+ENV DEBIAN_FRONTEND=noninteractive
+ARG VERSION=1.10.0.rc2
 
 # install deps
 RUN apt-get update -y && apt-get install -y \
         wget \
-        python-dev \
-        python-pip \
         libczmq-dev \
-        libcurlpp-dev \
         curl \
         libssl-dev \
-        git \
         inetutils-telnet \
         bind9utils \
         zip \
         unzip \
-    && apt-get clean
-
+    && apt-get clean \
+    && apt-get purge -y python2.7 \
+    && apt-get -y --purge autoremove
 
 RUN pip install --upgrade pip
 
+COPY requirements.txt ./
+
 # Since we install vanilla Airflow, we also want to have support for Postgres and Kubernetes
-RUN pip install -U setuptools && \
-    pip install kubernetes && \
-    pip install cryptography && \
-    pip install psycopg2-binary==2.7.4  # I had issues with older versions of psycopg2, just a warning
+RUN pip install -r requirements.txt
 
 # install airflow
-COPY airflow.tar.gz /tmp/airflow.tar.gz
-RUN pip install /tmp/airflow.tar.gz
+ADD https://github.com/apache/incubator-airflow/archive/${VERSION}.zip /tmp/
+RUN cd /tmp \
+    && unzip ${VERSION}.zip \
+    && cd incubator-airflow-${VERSION} \
+    && rm -rf airflow/example_dags \
+    && python setup.py install
 
-COPY airflow-test-env-init.sh /tmp/airflow-test-env-init.sh
+COPY airflow-env-init.sh /tmp/airflow-env-init.sh
 
 COPY bootstrap.sh /bootstrap.sh
 RUN chmod +x /bootstrap.sh

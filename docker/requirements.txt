@@ -1,0 +1,5 @@
+setuptools>=39.2.0
+docker>=3.4.1
+kubernetes>=6.0.0
+cryptography>=2.2.2
+psycopg2-binary==2.7.4

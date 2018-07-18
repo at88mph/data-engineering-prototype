@@ -17,8 +17,10 @@
 #  specific language governing permissions and limitations      *
 #  under the License.
 
-cd /usr/local/lib/python2.7/dist-packages/airflow && \
+cd /usr/local/lib/python3.6/site-packages/apache_airflow-1.10.0-py3.6.egg/airflow && \
+rm -rf /root/airflow/dags/* && \
 airflow initdb && \
 alembic upgrade heads && \
 (airflow create_user -u airflow -l User -f Airflow -e Dustin.Jenkins@nrc-cnrc.gc.ca -r Admin -p airflow || true) && \
+(airflow create_user -u admin -l Admin -f Airflow -e djenkins.cadc@gmail.com -r Admin -p airflow || true) && \
 echo "retrieved from mount" > /root/test_volume/test.txt
