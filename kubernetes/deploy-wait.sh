@@ -23,12 +23,14 @@ do
   echo "------- Running kubectl get pods -------"
   PODS=$(kubectl get pods | awk 'NR>1 {print $0}')
   echo "$PODS"
-  NUM_AIRFLOW_READY=$(echo $PODS | grep -E '^airflow' | awk '{print $2}' | grep -E '([0-9])\/(\1)' | wc -l | xargs)
+  NUM_AIRFLOW_SCHEDULER_READY=$(echo $PODS | grep airflow-scheduler | awk '{print $2}' | grep -E '([0-9])\/(\1)' | wc -l | xargs)
+  NUM_AIRFLOW_WEBSERVER_READY=$(echo $PODS | grep airflow-webserver | awk '{print $2}' | grep -E '([0-9])\/(\1)' | wc -l | xargs)  
   NUM_POSTGRES_READY=$(echo $PODS | grep -E '^postgres' | awk '{print $2}' | grep -E '([0-9])\/(\1)' | wc -l | xargs)
-  if [ "$NUM_AIRFLOW_READY" == "2" ] && [ "$NUM_POSTGRES_READY" == "1" ]; then
+  if [ "$NUM_AIRFLOW_SCHEDULER_READY" == "1" ] && [ "$NUM_AIRFLOW_WEBSERVER_READY" == "1" ] && [ "$NUM_POSTGRES_READY" == "1" ]; then
     break
   else
-    echo "Airflow instance count is $NUM_AIRFLOW_READY"
+    echo "Airflow Scheduler instance count is $NUM_AIRFLOW_SCHEDULER_READY"
+    echo "Airflow Web Server instance count is $NUM_AIRFLOW_WEBSERVER_READY"
     echo "PostgreSQL instance count is $NUM_POSTGRES_READY"
   fi
   sleep 4
