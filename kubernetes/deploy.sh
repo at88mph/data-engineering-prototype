@@ -47,12 +47,15 @@ do
   sleep 4
 done
 
-POD=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}' | grep airflow | head -1)
+SCHEDULER_POD=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}' | grep airflow-scheduler | head -1)
+WEBSERVER_POD=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}' | grep airflow-webserver | head -1)
 
-echo "------- pod description -------"
-kubectl describe pod $POD
+echo "------- Scheduler Pod description -------"
+kubectl describe pod $SCHEDULER_POD
+echo "------- Web Server Pod description -------"
+kubectl describe pod $WEBSERVER_POD
 echo "------- webserver logs -------"
-kubectl logs $POD webserver
+kubectl logs $WEBSERVER_POD webserver
 echo "------- scheduler logs -------"
-kubectl logs $POD scheduler
+kubectl logs $SCHEDULER_POD scheduler
 echo "--------------"
