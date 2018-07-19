@@ -1,10 +1,15 @@
 #!/bin/bash
 
-kubectl delete services airflow-webserver airflow-scheduler postgres-airflow
+DIRNAME=$(cd "$(dirname "$0")"; pwd)
+
+kubectl delete -f $DIRNAME/postgres.yaml
+kubectl delete -f $DIRNAME/airflow-webserver.yaml
+kubectl delete -f $DIRNAME/airflow-scheduler.yaml
+kubectl delete -f $DIRNAME/secrets.yaml
+
+# Extra cleanup for left over pods.
 kubectl delete deployments --all
 kubectl delete pods --all
-kubectl delete pvc --all
-kubectl delete pv --all
 
 echo "Pods:"
 kubectl get pods
