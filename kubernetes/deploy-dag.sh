@@ -31,5 +31,5 @@ fi
 SCHEDULER_POD=$(kubectl get pods | grep airflow-scheduler | awk '{print $1}')
 WEBSERVER_POD=$(kubectl get pods | grep airflow-webserver | awk '{print $1}')
 
-kubectl cp ${INPUT_FILE} ${SCHEDULER_POD}:/root/airflow/dags -c scheduler
-kubectl cp ${INPUT_FILE} ${WEBSERVER_POD}:/root/airflow/dags -c webserver
+kubectl cp ${INPUT_FILE} ${SCHEDULER_POD}:/root/airflow/dags -c scheduler -v 6
+kubectl cp ${INPUT_FILE} ${WEBSERVER_POD}:/root/airflow/dags -c webserver -v 6
