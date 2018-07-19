@@ -5,6 +5,7 @@ import json
 from airflow.operators.python_operator import PythonOperator
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 from airflow.operators.dummy_operator import DummyOperator
+#from airflow.operators.docker_operator import DockerOperator
 from airflow.models import DAG
 from airflow.hooks.base_hook import BaseHook
 
@@ -20,7 +21,7 @@ config = {"working_directory": "/root/airflow",
           "use_local_files": False,
           "logging_level": "DEBUG",
           "task_types": "TaskType.INGEST"}
-limit = "1000"
+limit = "100000"
 docker_image_tag = "client3"
 
 
@@ -74,15 +75,13 @@ def get_observations(**kwargs):
     return artifact_files_list
 
 
-complete = DummyOperator(task_id='complete', dag=poc_dag)
-
-
-for artifact in get_observations():
+def caom_commands(artifact, **kwargs):
     omm_cmd_args = []
     omm_cmd_args.append("{}".format(artifact))
     omm_cmd_args.append(cert)
     sanitized_artifact_uri = artifact.replace("+", "_").replace("%", "__")
-    task = KubernetesPodOperator(image="opencadc/omm2caom2:{}".format(docker_image_tag),
+
+    return KubernetesPodOperator(image="opencadc/omm2caom2:{}".format(docker_image_tag),
                                  namespace='default',
                                  dag=poc_dag,
                                  startup_timeout_seconds=480,
@@ -93,4 +92,9 @@ for artifact in get_observations():
                                  name="omm-caom2",
                                  get_logs=True,
                                  task_id="meta_{}".format(sanitized_artifact_uri))
-    task.set_downstream(complete)
+
+
+# complete = DummyOperator(task_id='complete', dag=poc_dag)
+
+for artifact in get_observations():
+    caom_commands(artifact)
