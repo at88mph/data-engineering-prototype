@@ -21,7 +21,7 @@ config = {"working_directory": "/root/airflow",
           "use_local_files": False,
           "logging_level": "DEBUG",
           "task_types": "TaskType.INGEST"}
-limit = "100000"
+limit = "1000"
 docker_image_tag = "client3"
 
 
@@ -72,16 +72,19 @@ def get_observations(**kwargs):
     # Skip the first item as it's the column header.
     for uri in artifact_uri_list[1:]:
         artifact_files_list.append(uri.split('/')[1].strip())
+
     return artifact_files_list
 
 
-def caom_commands(artifact, **kwargs):
+complete = DummyOperator(task_id='complete', dag=poc_dag)
+
+for artifact in get_observations():
     omm_cmd_args = []
     omm_cmd_args.append("{}".format(artifact))
     omm_cmd_args.append(cert)
     sanitized_artifact_uri = artifact.replace("+", "_").replace("%", "__")
 
-    return KubernetesPodOperator(image="opencadc/omm2caom2:{}".format(docker_image_tag),
+    task = KubernetesPodOperator(image="opencadc/omm2caom2:{}".format(docker_image_tag),
                                  namespace='default',
                                  dag=poc_dag,
                                  startup_timeout_seconds=480,
@@ -92,9 +95,7 @@ def caom_commands(artifact, **kwargs):
                                  name="omm-caom2",
                                  get_logs=True,
                                  task_id="meta_{}".format(sanitized_artifact_uri))
+    task.set_downstream(complete)
 
-
-# complete = DummyOperator(task_id='complete', dag=poc_dag)
-
-for artifact in get_observations():
-    caom_commands(artifact)
+if __name__ == "__main__":
+    poc_dag.cli()
