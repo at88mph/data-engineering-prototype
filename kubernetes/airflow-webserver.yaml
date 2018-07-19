@@ -84,6 +84,10 @@ spec:
             secretKeyRef:
               name: airflow-secrets
               key: sql_alchemy_conn
+        resources:
+          requests:
+            memory: "750Mi"
+            cpu: "350m"
         volumeMounts:
         - name: airflow-configmap
           mountPath: /root/airflow/airflow.cfg
