@@ -93,4 +93,4 @@ def caom_commands(artifact, **kwargs):
 complete = DummyOperator(task_id='complete', dag=poc_dag)
 
 for artifact in get_observations():
-    caom_commands(artifact) >> complete
+    caom_commands(artifact) << complete
