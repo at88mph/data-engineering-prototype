@@ -75,7 +75,7 @@ def get_observations(**kwargs):
     return artifact_files_list
 
 
-def caom_commands(artifact, **kwargs):
+def caom_command(artifact, **kwargs):
     omm_cmd_args = []
     omm_cmd_args.append("{}".format(artifact))
     omm_cmd_args.append(cert)
@@ -94,7 +94,8 @@ def caom_commands(artifact, **kwargs):
                                  task_id="meta_{}".format(sanitized_artifact_uri))
 
 
-# complete = DummyOperator(task_id='complete', dag=poc_dag)
+complete = DummyOperator(task_id='complete', dag=poc_dag)
 
 for artifact in get_observations():
-    caom_commands(artifact)
+    kubetask = caom_command(artifact)
+    kubetask.set_downstream(complete)
