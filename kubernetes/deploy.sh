@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 #
 #  Licensed to the Apache Software Foundation (ASF) under one   *
 #  or more contributor license agreements.  See the NOTICE file *
@@ -43,6 +43,9 @@ do
   NUM_POSTGRES_READY=$(echo $PODS | grep -E '^postgres' | awk '{print $2}' | grep -E '([0-9])\/(\1)' | wc -l | xargs)
   if [ "$NUM_AIRFLOW_READY" == "2" ] && [ "$NUM_POSTGRES_READY" == "1" ]; then
     break
+  else
+    echo "Airflow instance count is ${NUM_AIRFLOW_READY}"
+    echo "PostgreSQL instance count is ${NUM_POSTGRES_READY}"
   fi
   sleep 4
 done
