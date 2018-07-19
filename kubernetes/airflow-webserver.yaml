@@ -86,8 +86,8 @@ spec:
               key: sql_alchemy_conn
         resources:
           requests:
-            memory: "750Mi"
-            cpu: "350m"
+            memory: "1Gi"
+            cpu: "1.0"
         volumeMounts:
         - name: airflow-configmap
           mountPath: /root/airflow/airflow.cfg
