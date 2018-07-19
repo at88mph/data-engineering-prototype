@@ -62,7 +62,7 @@ def get_observations(**kwargs):
     data = {"QUERY": query_meta, "REQUEST": "doQuery", "LANG": "ADQL",
             "FORMAT": "csv"}
     url = "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap/sync?{}".format(parse.urlencode(data))
-    local_filename = request.urlretrieve(url)
+    local_filename, headers = request.urlretrieve(url)
     html = open(local_filename)
     artifact_uri_list = html.readlines()
     html.close()
