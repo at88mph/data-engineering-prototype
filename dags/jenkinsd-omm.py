@@ -45,7 +45,9 @@ default_args = {
     'provide_context': True
 }
 
+
 poc_dag = DAG(dag_id='jenkinsd-poc', default_args=default_args, schedule_interval=None)
+
 
 def get_observations(**kwargs):
     query_meta = "SELECT Artifact.uri " \
@@ -77,6 +79,7 @@ def caom_commands(artifact, **kwargs):
     omm_cmd_args = []
     omm_cmd_args.append("{}".format(artifact))
     omm_cmd_args.append(cert)
+    sanitized_artifact_uri = artifact.replace("+", "_").replace("%", "__")
 
     return KubernetesPodOperator(image="opencadc/omm2caom2:{}".format(docker_image_tag),
                                  namespace='default',
@@ -88,9 +91,10 @@ def caom_commands(artifact, **kwargs):
                                  in_cluster=True,
                                  name="omm-caom2",
                                  get_logs=True,
-                                 task_id="meta_{}".format(artifact))
+                                 task_id="meta_{}".format(sanitized_artifact_uri))
 
-complete = DummyOperator(task_id='complete', dag=poc_dag)
+
+# complete = DummyOperator(task_id='complete', dag=poc_dag)
 
 for artifact in get_observations():
-    caom_commands(artifact) << complete
+    caom_commands(artifact)
