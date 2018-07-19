@@ -84,7 +84,7 @@ spec:
         resources:
           requests:
             memory: "2Gi"
-            cpu: "2.0"
+            cpu: "1.2"
         volumeMounts:
         - name: airflow-configmap
           mountPath: /root/airflow/airflow.cfg
