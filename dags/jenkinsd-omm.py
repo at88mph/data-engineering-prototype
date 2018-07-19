@@ -3,6 +3,7 @@ import logging
 import json
 
 from airflow.operators.python_operator import PythonOperator
+from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 from airflow.operators.dummy_operator import DummyOperator
 #from airflow.operators.docker_operator import DockerOperator
@@ -97,5 +98,9 @@ def caom_command(artifact, **kwargs):
 complete = DummyOperator(task_id='complete', dag=poc_dag)
 
 for artifact in get_observations():
-    kubetask = caom_command(artifact)
+    sanitized_artifact_uri = artifact.replace("+", "_").replace("%", "__")
+    kubetask = BashOperator(
+        task_id="runme_" + sanitized_artifact_uri,
+        bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
+        dag=poc_dag)
     kubetask.set_downstream(complete)
