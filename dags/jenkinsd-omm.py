@@ -95,7 +95,7 @@ def caom_command(artifact, **kwargs):
                                  task_id="meta_{}".format(sanitized_artifact_uri))
 
 
-complete = DummyOperator(task_id='complete', dag=poc_dag)
+# complete = DummyOperator(task_id='complete', dag=poc_dag)
 
 for artifact in get_observations():
     sanitized_artifact_uri = artifact.replace("+", "_").replace("%", "__")
@@ -103,4 +103,4 @@ for artifact in get_observations():
         task_id="runme_" + sanitized_artifact_uri,
         bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
         dag=poc_dag)
-    kubetask.set_downstream(complete)
+#    kubetask.set_downstream(complete)
