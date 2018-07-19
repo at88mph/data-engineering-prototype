@@ -21,7 +21,7 @@ config = {"working_directory": "/root/airflow",
           "use_local_files": False,
           "logging_level": "DEBUG",
           "task_types": "TaskType.INGEST"}
-limit = "100000"
+limit = "10"
 docker_image_tag = "client3"
 
 
