@@ -55,7 +55,7 @@ poc_dag = DAG(dag_id='jenkinsd-poc', default_args=default_args, schedule_interva
 
 
 def get_observations(**kwargs):
-    query_meta = "SELECT DISTINCT Artifact.uri " \
+    query_meta = "SELECT Artifact.uri " \
                  "FROM caom2.Artifact AS Artifact " \
                  "JOIN caom2.Plane AS Plane  " \
                  "ON Artifact.planeID = Plane.planeID " \
@@ -68,8 +68,8 @@ def get_observations(**kwargs):
                  "LIMIT " + limit
     data = {"QUERY": query_meta, "REQUEST": "doQuery", "LANG": "ADQL",
             "FORMAT": "csv"}
-    url = "http://sc2.canfar.net/sc2tap/sync?{}".format(parse.urlencode(data))
-    local_filename, headers = request.urlretrieve(url)
+    url = "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap/sync?{}".format(parse.urlencode(data))
+    local_filename = request.urlretrieve(url)
     html = open(local_filename)
     artifact_uri_list = html.readlines()
     html.close()
