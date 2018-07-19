@@ -14,12 +14,6 @@ from urllib import parse as parse
 from urllib import request as request
 
 
-#config = {'working_directory': '/root/airflow',
-#          'netrc_filename': '/root/airflow/test_netrc',
-#          'resource_id': 'ivo://cadc.nrc.ca/sc2repo',
-#          'use_local_files': False,
-#          'logging_level': 'INFO',
-#          'task_types': 'TaskType.INGEST'}
 connection = BaseHook.get_connection("caom2-cred")
 cert = connection.extra
 config = {"working_directory": "/root/airflow",
@@ -53,7 +47,6 @@ default_args = {
 
 poc_dag = DAG(dag_id='jenkinsd-poc', default_args=default_args, schedule_interval=None)
 
-
 def get_observations(**kwargs):
     query_meta = "SELECT Artifact.uri " \
                  "FROM caom2.Artifact AS Artifact " \
@@ -81,19 +74,9 @@ def get_observations(**kwargs):
 
 
 def caom_commands(artifact, **kwargs):
-    # uri_list = "{{ task_instance.xcom_pull(task_ids='get_observations') }}"
-    # return PythonOperator(python_callable=do_that, provide_context=True,
-    #                       task_id='meta_{}'.format(artifact),
-    #                       dag=poc_dag, op_kwargs={'artifact': artifact})
-
-    # file not found error
-    # x = DockerOperator(docker_url='unix:///var/run/docker.sock',
-    # connection refused
-    # x = DockerOperator(docker_url='tcp://localhost:2375',
     omm_cmd_args = []
     omm_cmd_args.append("{}".format(artifact))
     omm_cmd_args.append(cert)
-    #omm_cmd_args.append(password)
 
     return KubernetesPodOperator(image="opencadc/omm2caom2:{}".format(docker_image_tag),
                                  namespace='default',
@@ -106,18 +89,7 @@ def caom_commands(artifact, **kwargs):
                                  name="omm-caom2",
                                  get_logs=True,
                                  task_id="meta_{}".format(artifact))
-#    return DockerOperator(command='omm_run {}'.format(artifact),
-#                       image='opencadc/omm2caom2',
-#                       api_version='auto',
-#                       network_mode='bridge',
-#                       volumes=['/var/run/docker.sock:/var/run/docker.sock:ro'],
-#                       task_id='meta_{}'.format(artifact),
-#                       dag=poc_dag)
 
-#uri_list = PythonOperator(
-#    task_id='get_observations',
-#    python_callable=get_observations,
-#    dag=poc_dag)
 complete = DummyOperator(task_id='complete', dag=poc_dag)
 
 for artifact in get_observations():
