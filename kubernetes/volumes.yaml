@@ -22,7 +22,6 @@ apiVersion: v1
 metadata:
   name: airflow-dags
 spec:
-  persistentVolumeReclaimPolicy: Delete
   accessModes:
     - ReadWriteOnce
   capacity:
@@ -45,8 +44,7 @@ kind: PersistentVolume
 apiVersion: v1
 metadata:
   name: airflow-logs
-spec:
-  persistentVolumeReclaimPolicy: Delete
+spec:  
   accessModes:
     - ReadWriteOnce
   capacity:
@@ -70,7 +68,6 @@ apiVersion: v1
 metadata:
   name: test-volume
 spec:
-  persistentVolumeReclaimPolicy: Delete
   accessModes:
     - ReadWriteOnce
   capacity:
