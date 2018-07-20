@@ -56,13 +56,14 @@ def get_artifact_uris(**kwargs):
     with request.urlopen(url) as response:
         return response.read().decode('utf-8').split('\n')
 
-def op_commands(uri, **kwargs):        
-    artifact_uri = uri.split('/')[1].strip()
-    sanitized_artifact_uri = artifact_uri.replace("+", "_").replace("%", "__")
-    return BashOperator(
-                task_id="runme_" + sanitized_artifact_uri,
-                bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
-                dag=dag)
+def op_commands(uri, **kwargs):
+    if uri:
+        artifact_uri = uri.split('/')[1].strip()
+        sanitized_artifact_uri = artifact_uri.replace("+", "_").replace("%", "__")
+        return BashOperator(
+                    task_id="runme_" + sanitized_artifact_uri,
+                    bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
+                    dag=dag)
 
 artifact_uris_operator = PythonOperator(task_id='get_artifact_uris', python_callable=get_artifact_uris, dag=dag)
 complete = DummyOperator(task_id='complete', dag=dag)
