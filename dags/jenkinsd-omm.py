@@ -57,18 +57,20 @@ with request.urlopen(url) as response:
         if uri:
             artifact_uri = uri.split('/')[1].strip()
             sanitized_artifact_uri = artifact_uri.replace("+", "_").replace("%", "__")
-            dag = DAG(dag_id='jenkinsd-poc-{}'.format(sanitized_artifact_uri), default_args=default_args, schedule_interval=None)
+            dag_id = 'jenkinsd-poc-{}'.format(sanitized_artifact_uri)
+            dag = DAG(dag_id=dag_id, default_args=default_args, schedule_interval=None)
+            globals()[dag_id] = dag
             BashOperator(
                 task_id="runme_" + sanitized_artifact_uri,
                 bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
                 dag=dag)
             session = airflow.settings.Session()
             try:
-                qry = session.query(DagModel).filter(DagModel.dag_id == dag.dag_id)
+                qry = session.query(DagModel).filter(DagModel.dag_id == dag_id)
                 d = qry.first()
                 d.is_paused = False
                 session.commit()
             except:
                 session.rollback()
             finally:
-                session.close()                
+                session.close()
