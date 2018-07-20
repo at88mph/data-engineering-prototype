@@ -76,30 +76,30 @@ def get_observations(**kwargs):
     return artifact_files_list
 
 
-def caom_command(artifact, **kwargs):
-    omm_cmd_args = []
-    omm_cmd_args.append("{}".format(artifact))
-    omm_cmd_args.append(cert)
-    sanitized_artifact_uri = artifact.replace("+", "_").replace("%", "__")
+# def caom_command(artifact, **kwargs):
+#     omm_cmd_args = []
+#     omm_cmd_args.append("{}".format(artifact))
+#     omm_cmd_args.append(cert)
+#     sanitized_artifact_uri = artifact.replace("+", "_").replace("%", "__")
 
-    return KubernetesPodOperator(image="opencadc/omm2caom2:{}".format(docker_image_tag),
-                                 namespace='default',
-                                 dag=poc_dag,
-                                 startup_timeout_seconds=480,
-                                 cmds=["omm_run_single"],
-                                 arguments=omm_cmd_args,
-                                 image_pull_policy="IfNotPresent",
-                                 in_cluster=True,
-                                 name="omm-caom2",
-                                 get_logs=True,
-                                 task_id="meta_{}".format(sanitized_artifact_uri))
+#     return KubernetesPodOperator(image="opencadc/omm2caom2:{}".format(docker_image_tag),
+#                                  namespace='default',
+#                                  dag=poc_dag,
+#                                  startup_timeout_seconds=480,
+#                                  cmds=["omm_run_single"],
+#                                  arguments=omm_cmd_args,
+#                                  image_pull_policy="IfNotPresent",
+#                                  in_cluster=True,
+#                                  name="omm-caom2",
+#                                  get_logs=True,
+#                                  task_id="meta_{}".format(sanitized_artifact_uri))
 
 
 # complete = DummyOperator(task_id='complete', dag=poc_dag)
 
 for artifact in get_observations():
     sanitized_artifact_uri = artifact.replace("+", "_").replace("%", "__")
-    kubetask = BashOperator(
+    BashOperator(
         task_id="runme_" + sanitized_artifact_uri,
         bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
         dag=poc_dag)
