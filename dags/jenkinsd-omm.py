@@ -64,7 +64,8 @@ def op_commands(uri, **kwargs):
                 bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
                 dag=dag)
 
-artifact_uris_operator = PythonOperator(task_id='get_artifact_uris', python_callable=get_artifact_uris, dag=dag)
+# artifact_uris_operator = PythonOperator(task_id='get_artifact_uris', python_callable=get_artifact_uris, dag=dag)
+start = DummyOperator(task_id='start', dag=dag)
 complete = DummyOperator(task_id='complete', dag=dag)
 
 artifact_uri_array = get_artifact_uris()
@@ -73,4 +74,4 @@ logging.info('Found {} items.'.format(len(artifact_uri_array)))
 # Skip the first item as it's the column header.
 for uri in artifact_uri_array[1:]:
     if uri:
-        artifact_uris_operator >> op_commands(uri) >> complete
+        start >> op_commands(uri) >> complete
