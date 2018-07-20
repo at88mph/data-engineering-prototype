@@ -16,8 +16,8 @@ from urllib import parse as parse
 from urllib import request as request
 
 
-connection = BaseHook.get_connection("caom2-cred")
-cert = connection.extra
+#connection = BaseHook.get_connection("caom2-cred")
+#cert = connection.extra
 config = {"working_directory": "/root/airflow",
           "resource_id": "ivo://cadc.nrc.ca/sc2repo",
           "use_local_files": False,
