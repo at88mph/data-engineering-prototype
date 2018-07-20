@@ -31,36 +31,30 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 0,
-    'retry_delay': timedelta(minutes=5),
-    'provide_context': True
+    'retry_delay': timedelta(minutes=5)    
 }
 
-
-def build(**kwargs):
-    query_meta = "SELECT Artifact.uri " \
-                 "FROM caom2.Artifact AS Artifact " \
-                 "JOIN caom2.Plane AS Plane  " \
-                 "ON Artifact.planeID = Plane.planeID " \
-                 "JOIN caom2.Observation AS Observation " \
-                 "ON Plane.obsID = Observation.obsID " \
-                 "WHERE Observation.collection = 'OMM' " \
-                 "AND Artifact.uri not like '%jpg' " \
-                 "AND Artifact.uri like 'ad:OMM/%' " \
-                 "AND Observation.lastModified < '2018-07-01 00:00:00.000' " \
-                 "LIMIT " + limit
-    data = {"QUERY": query_meta, "REQUEST": "doQuery", "LANG": "ADQL",
-            "FORMAT": "csv"}
-    url = "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap/sync?{}".format(parse.urlencode(data))
-    with request.urlopen(url) as response:
-        artifact_uri_list = response.data
-        # Skip the first item as it's the column header.
-        for uri in artifact_uri_list[1:]:
-            artifact_uri = uri.split('/')[1].strip()
-            sanitized_artifact_uri = artifact_uri.replace("+", "_").replace("%", "__")
-            dag = DAG(dag_id='jenkinsd-poc-{}'.format(sanitized_artifact_uri), default_args=default_args, schedule_interval=None)
-            BashOperator(
-                task_id="runme_" + sanitized_artifact_uri,
-                bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
-                dag=dag)    
-
-build()
+query_meta = "SELECT Artifact.uri " \
+                "FROM caom2.Artifact AS Artifact " \
+                "JOIN caom2.Plane AS Plane  " \
+                "ON Artifact.planeID = Plane.planeID " \
+                "JOIN caom2.Observation AS Observation " \
+                "ON Plane.obsID = Observation.obsID " \
+                "WHERE Observation.collection = 'OMM' " \
+                "AND Artifact.uri not like '%jpg' " \
+                "AND Artifact.uri like 'ad:OMM/%' " \
+                "AND Observation.lastModified < '2018-07-01 00:00:00.000' " \
+                "LIMIT " + limit
+data = {"QUERY": query_meta, "REQUEST": "doQuery", "LANG": "ADQL", "FORMAT": "csv"}
+url = "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap/sync?{}".format(parse.urlencode(data))
+with request.urlopen(url) as response:
+    artifact_uri_list = response.data
+    # Skip the first item as it's the column header.
+    for uri in artifact_uri_list[1:]:
+        artifact_uri = uri.split('/')[1].strip()
+        sanitized_artifact_uri = artifact_uri.replace("+", "_").replace("%", "__")
+        dag = DAG(dag_id='jenkinsd-poc-{}'.format(sanitized_artifact_uri), default_args=default_args, schedule_interval=None)
+        BashOperator(
+            task_id="runme_" + sanitized_artifact_uri,
+            bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
+            dag=dag)
