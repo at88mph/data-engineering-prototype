@@ -20,7 +20,7 @@
 SOURCE=${1}
 OPTS=${2}
 
-if [[ "${SOURCE}" == "" && "${SOURCE}" != "scheduler" && "${SOURCE}" != "webserver" ]];
+if [[ "${SOURCE}" == "" || "${SOURCE}" != "scheduler" && "${SOURCE}" != "webserver" ]];
 then
   echo "Input not specified or is invalid ('${SOURCE}').  Use scheduler or webserver."
   echo "Usage: logs.sh scheduler"
