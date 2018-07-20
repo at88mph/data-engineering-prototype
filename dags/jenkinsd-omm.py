@@ -22,8 +22,8 @@ config = {"working_directory": "/root/airflow",
           "use_local_files": False,
           "logging_level": "DEBUG",
           "task_types": "TaskType.INGEST"}
-limit = "100000"
-docker_image_tag = "client3"
+limit = "200000"
+docker_image_tag = "client5"
 
 
 def do_that(**kwargs):
