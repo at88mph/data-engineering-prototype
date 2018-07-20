@@ -20,7 +20,7 @@
 SOURCE=${1}
 OPTS=${2}
 
-if [ "${SOURCE}" == "" && "${SOURCE}" != "scheduler" && "${SOURCE}" != "webserver" ];
+if [[ "${SOURCE}" == "" && "${SOURCE}" != "scheduler" && "${SOURCE}" != "webserver" ]];
 then
   echo "Input not specified or is invalid ('${SOURCE}').  Use scheduler or webserver."
   echo "Usage: logs.sh scheduler"
@@ -31,4 +31,4 @@ fi
 
 POD=$(kubectl get pods | grep airflow-${SOURCE} | awk '{print $1}')
 
-kubectl logs ${OPTS} ${SCHEDULER_POD} -c ${SOURCE}
+kubectl logs ${OPTS} ${POD} -c ${SOURCE}
