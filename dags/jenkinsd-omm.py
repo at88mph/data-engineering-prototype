@@ -18,13 +18,13 @@ from urllib import request as request
 
 #connection = BaseHook.get_connection("caom2-cred")
 #cert = connection.extra
-config = {"working_directory": "/root/airflow",
-          "resource_id": "ivo://cadc.nrc.ca/sc2repo",
-          "use_local_files": False,
-          "logging_level": "DEBUG",
-          "task_types": "TaskType.INGEST"}
-limit = "200"
-docker_image_tag = "client5"
+config = {'working_directory': '/root/airflow',
+          'resource_id': 'ivo://cadc.nrc.ca/sc2repo',
+          'use_local_files': False,
+          'logging_level': 'DEBUG',
+          'task_types': 'TaskType.INGEST'}
+limit = '200'
+docker_image_tag = 'client5'
 
 default_args = {
     'owner': 'airflow',
@@ -51,18 +51,24 @@ def get_artifact_uris(**kwargs):
                 "AND Artifact.uri like 'ad:OMM/%' " \
                 "AND Observation.lastModified < '2018-07-01 00:00:00.000' " \
                 "LIMIT " + limit
-    data = {"QUERY": query_meta, "REQUEST": "doQuery", "LANG": "ADQL", "FORMAT": "csv"}
-    url = "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap/sync?{}".format(parse.urlencode(data))
+    data = {'QUERY': query_meta, 'REQUEST': 'doQuery', 'LANG': 'ADQL', 'FORMAT': 'csv'}
+    url = 'http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap/sync?{}'.format(parse.urlencode(data))
     with request.urlopen(url) as response:
         return response.read().decode('utf-8').split('\n')
 
 def op_commands(uri, **kwargs):    
     artifact_uri = uri.split('/')[1].strip()
-    sanitized_artifact_uri = artifact_uri.replace("+", "_").replace("%", "__")
-    return BashOperator(
-                task_id="runme_" + sanitized_artifact_uri,
-                bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
-                dag=dag)
+    sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
+    return KubernetesPodOperator(
+                namespace='default',
+                task_id='kube_{}'.format(sanitized_artifact_uri),
+                image='ubuntu:18.04',
+                in_cluster=True,
+                get_logs=True,
+                cmds=['bash', '-cx'],
+                name="airflow-test-pod",
+                arguments=['echo', 'Hello world - {}'.format(sanitized_artifact_uri)],
+                dag=dag)            
 
 # artifact_uris_operator = PythonOperator(task_id='get_artifact_uris', python_callable=get_artifact_uris, dag=dag)
 start = DummyOperator(task_id='start', dag=dag)
