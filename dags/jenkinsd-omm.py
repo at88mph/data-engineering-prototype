@@ -6,7 +6,6 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 from airflow.operators.dummy_operator import DummyOperator
-#from airflow.operators.docker_operator import DockerOperator
 from airflow.models import DAG
 from airflow.hooks.base_hook import BaseHook
 
@@ -25,16 +24,6 @@ config = {"working_directory": "/root/airflow",
 limit = "200000"
 docker_image_tag = "client5"
 
-
-def do_that(**kwargs):
-    logging.error(config)
-    logging.error(kwargs['artifact'])
-
-args = {
-    'owner': 'airflow',
-    'start_date': airflow.utils.dates.days_ago(2)
-}
-
 default_args = {
     'owner': 'airflow',
     'start_date': airflow.utils.dates.days_ago(2),
@@ -47,10 +36,7 @@ default_args = {
 }
 
 
-poc_dag = DAG(dag_id='jenkinsd-poc', default_args=default_args, schedule_interval=None)
-
-
-def get_observations(**kwargs):
+def build(**kwargs):
     query_meta = "SELECT Artifact.uri " \
                  "FROM caom2.Artifact AS Artifact " \
                  "JOIN caom2.Plane AS Plane  " \
@@ -65,42 +51,16 @@ def get_observations(**kwargs):
     data = {"QUERY": query_meta, "REQUEST": "doQuery", "LANG": "ADQL",
             "FORMAT": "csv"}
     url = "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap/sync?{}".format(parse.urlencode(data))
-    local_filename, headers = request.urlretrieve(url)
-    html = open(local_filename)
-    artifact_uri_list = html.readlines()
-    html.close()
-    artifact_files_list = []
-    # Skip the first item as it's the column header.
-    for uri in artifact_uri_list[1:]:
-        artifact_files_list.append(uri.split('/')[1].strip())
-    return artifact_files_list
+    with request.urlopen(url) as response:
+        artifact_uri_list = response.data
+        # Skip the first item as it's the column header.
+        for uri in artifact_uri_list[1:]:
+            artifact_uri = uri.split('/')[1].strip()
+            sanitized_artifact_uri = artifact_uri.replace("+", "_").replace("%", "__")
+            dag = DAG(dag_id='jenkinsd-poc-{}'.format(sanitized_artifact_uri), default_args=default_args, schedule_interval=None)
+            BashOperator(
+                task_id="runme_" + sanitized_artifact_uri,
+                bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
+                dag=dag)    
 
-
-# def caom_command(artifact, **kwargs):
-#     omm_cmd_args = []
-#     omm_cmd_args.append("{}".format(artifact))
-#     omm_cmd_args.append(cert)
-#     sanitized_artifact_uri = artifact.replace("+", "_").replace("%", "__")
-
-#     return KubernetesPodOperator(image="opencadc/omm2caom2:{}".format(docker_image_tag),
-#                                  namespace='default',
-#                                  dag=poc_dag,
-#                                  startup_timeout_seconds=480,
-#                                  cmds=["omm_run_single"],
-#                                  arguments=omm_cmd_args,
-#                                  image_pull_policy="IfNotPresent",
-#                                  in_cluster=True,
-#                                  name="omm-caom2",
-#                                  get_logs=True,
-#                                  task_id="meta_{}".format(sanitized_artifact_uri))
-
-
-# complete = DummyOperator(task_id='complete', dag=poc_dag)
-
-for artifact in get_observations():
-    sanitized_artifact_uri = artifact.replace("+", "_").replace("%", "__")
-    BashOperator(
-        task_id="runme_" + sanitized_artifact_uri,
-        bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
-        dag=poc_dag)
-#    kubetask.set_downstream(complete)
+build()
