@@ -1,4 +1,5 @@
 import airflow
+import airflow.settings
 import logging
 import json
 
@@ -7,6 +8,7 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.models import DAG
+from airflow.models import DagModel
 from airflow.hooks.base_hook import BaseHook
 
 from datetime import timedelta
@@ -60,3 +62,13 @@ with request.urlopen(url) as response:
                 task_id="runme_" + sanitized_artifact_uri,
                 bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
                 dag=dag)
+            session = airflow.settings.Session()
+            try:
+                qry = session.query(DagModel).filter(DagModel.dag_id == dag.dag_id)
+                d = qry.first()
+                d.is_paused = False
+                session.commit()
+            except:
+                session.rollback()
+            finally:
+                session.close()                
