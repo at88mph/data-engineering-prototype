@@ -33,10 +33,14 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 0,
-    'retry_delay': timedelta(minutes=5)    
+    'retry_delay': timedelta(minutes=5),
+    'provide_context': True
 }
 
-query_meta = "SELECT Artifact.uri " \
+dag = DAG(dag_id='jenkinsd-omm', default_args=default_args, schedule_interval=None)
+
+def get_artifact_uris(**kwargs):
+    query_meta = "SELECT Artifact.uri " \
                 "FROM caom2.Artifact AS Artifact " \
                 "JOIN caom2.Plane AS Plane  " \
                 "ON Artifact.planeID = Plane.planeID " \
@@ -47,30 +51,25 @@ query_meta = "SELECT Artifact.uri " \
                 "AND Artifact.uri like 'ad:OMM/%' " \
                 "AND Observation.lastModified < '2018-07-01 00:00:00.000' " \
                 "LIMIT " + limit
-data = {"QUERY": query_meta, "REQUEST": "doQuery", "LANG": "ADQL", "FORMAT": "csv"}
-url = "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap/sync?{}".format(parse.urlencode(data))
-with request.urlopen(url) as response:
-    artifact_uri_list = response.read().decode('utf-8').split('\n')
-    logging.info('Found {} items.'.format(len(artifact_uri_list)))
-    # Skip the first item as it's the column header.
-    for uri in artifact_uri_list[1:]:
-        if uri:
-            artifact_uri = uri.split('/')[1].strip()
-            sanitized_artifact_uri = artifact_uri.replace("+", "_").replace("%", "__")
-            dag_id = 'jenkinsd-poc-{}'.format(sanitized_artifact_uri)
-            dag = DAG(dag_id=dag_id, default_args=default_args, schedule_interval=None)
-            globals()[dag_id] = dag
-            BashOperator(
+    data = {"QUERY": query_meta, "REQUEST": "doQuery", "LANG": "ADQL", "FORMAT": "csv"}
+    url = "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap/sync?{}".format(parse.urlencode(data))
+    with request.urlopen(url) as response:
+        return response.read().decode('utf-8').split('\n')
+
+def op_commands(uri, **kwargs):        
+    artifact_uri = uri.split('/')[1].strip()
+    sanitized_artifact_uri = artifact_uri.replace("+", "_").replace("%", "__")
+    return BashOperator(
                 task_id="runme_" + sanitized_artifact_uri,
                 bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
                 dag=dag)
-            session = airflow.settings.Session()
-            try:
-                qry = session.query(DagModel).filter(DagModel.dag_id == dag_id)
-                d = qry.first()
-                d.is_paused = False
-                session.commit()
-            except:
-                session.rollback()
-            finally:
-                session.close()
+
+artifact_uris_operator = PythonOperator(task_id='get_artifact_uris', python_callable=get_artifact_uris, dag=dag)
+complete = DummyOperator(task_id='complete', dag=dag)
+
+artifact_uri_array = get_artifact_uris()
+logging.info('Found {} items.'.format(len(artifact_uri_array)))
+
+# Skip the first item as it's the column header.
+for uri in artifact_uri_array[1:]:
+    artifact_uris_operator >> op_commands(uri) >> complete
