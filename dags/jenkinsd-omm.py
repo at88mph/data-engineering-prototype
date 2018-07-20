@@ -52,11 +52,11 @@ with request.urlopen(url) as response:
     logging.info('Found {} items.'.format(len(artifact_uri_list)))
     # Skip the first item as it's the column header.
     for uri in artifact_uri_list[1:]:
-        logging.info('Processing {}'.format(uri))
-        artifact_uri = uri.split('/')[1].strip()
-        sanitized_artifact_uri = artifact_uri.replace("+", "_").replace("%", "__")
-        dag = DAG(dag_id='jenkinsd-poc-{}'.format(sanitized_artifact_uri), default_args=default_args, schedule_interval=None)
-        BashOperator(
-            task_id="runme_" + sanitized_artifact_uri,
-            bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
-            dag=dag)
+        if uri:
+            artifact_uri = uri.split('/')[1].strip()
+            sanitized_artifact_uri = artifact_uri.replace("+", "_").replace("%", "__")
+            dag = DAG(dag_id='jenkinsd-poc-{}'.format(sanitized_artifact_uri), default_args=default_args, schedule_interval=None)
+            BashOperator(
+                task_id="runme_" + sanitized_artifact_uri,
+                bash_command='echo "Hello world - {}"'.format(sanitized_artifact_uri),
+                dag=dag)
