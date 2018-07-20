@@ -49,6 +49,7 @@ data = {"QUERY": query_meta, "REQUEST": "doQuery", "LANG": "ADQL", "FORMAT": "cs
 url = "http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap/sync?{}".format(parse.urlencode(data))
 with request.urlopen(url) as response:
     artifact_uri_list = response.read().decode('utf-8').split('\n')
+    logging.info('Found {} items.'.format(len(artifact_uri_list)))
     # Skip the first item as it's the column header.
     for uri in artifact_uri_list[1:]:
         artifact_uri = uri.split('/')[1].strip()
