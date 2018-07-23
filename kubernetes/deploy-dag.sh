@@ -19,17 +19,26 @@
 
 INPUT_FILE=${1}
 
-if [ "${INPUT_FILE}" == "" ];
+if [[ "${INPUT_FILE}" == "" || ! -f "${HOME}/data-engineering-prototype/dags/${INPUT_FILE}" ]];
 then
-  echo "No input file provided."
-  echo "Usage: deploy-dag.sh my-dag-file.py"
+  echo "No input file provided.  Ensure ~/data-engineering-prototype/dags/${INPUT_FILE} exists."
+  echo "Usage: deploy-dag-single.sh my-dag-file.py"
   exit -1
 else
-  echo "Deploying ${INPUT_FILE}."
+  echo "Deploying ~/data-engineering-prototype/dags/${INPUT_FILE}."
 fi
 
 SCHEDULER_POD=$(kubectl get pods | grep airflow-scheduler | awk '{print $1}')
 WEBSERVER_POD=$(kubectl get pods | grep airflow-webserver | awk '{print $1}')
 
-kubectl cp ${INPUT_FILE} ${SCHEDULER_POD}:/root/airflow/dags -c scheduler -v 6
-kubectl cp ${INPUT_FILE} ${WEBSERVER_POD}:/root/airflow/dags -c webserver -v 6
+kubectl cp ${HOME}/data-engineering-prototype/dags/${INPUT_FILE} ${SCHEDULER_POD}:/root/airflow/dags -c scheduler -v 6
+kubectl cp ${HOME}/data-engineering-prototype/dags/${INPUT_FILE} ${WEBSERVER_POD}:/root/airflow/dags -c webserver -v 6
+
+for i in {4..6}; do
+  HOST="10.0.0.${i}"
+  echo "Sending ${INPUT_FILE} to ${HOST}";
+  ssh ${HOST} 'sudo rm -rf /mnt/airflow-dags/*';
+  ssh ${HOST} 'sudo touch /mnt/airflow-dags/${INPUT_FILE}';
+  ssh ${HOST} 'sudo chown ubuntu:ubuntu /mnt/airflow-dags/${INPUT_FILE}';
+  scp ~/data-engineering-prototype/dags/${INPUT_FILE} 10.0.0.${i}:/mnt/airflow-dags/;
+done
