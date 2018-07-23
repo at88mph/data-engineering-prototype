@@ -134,8 +134,6 @@ spec:
           mountPath: /root/airflow/dags
         - name: airflow-logs
           mountPath: /root/airflow/logs
-        - name: docker-sock-volume
-          mountPath: /var/run/docker.sock
         resources:
           requests:
             memory: "2Gi"
@@ -153,10 +151,6 @@ spec:
       - name: airflow-configmap
         configMap:
           name: airflow-configmap
-      - name: docker-sock-volume
-        hostPath:
-          # location on host
-          path: /var/run/docker.sock
 ---
 apiVersion: v1
 kind: Service
