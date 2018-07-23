@@ -28,6 +28,6 @@ else
   echo "Deploying ${INPUT_FILE}."
 fi
 
-AIRFLOW_POD=$(kubectl get pods | grep airflow | awk '{print $1}')
+AIRFLOW_POD=$(kubectl get pods | grep ^airflow | awk '{print $1}')
 
 kubectl cp ${INPUT_FILE} ${AIRFLOW_POD}:/root/airflow/dags -c scheduler -v 6
