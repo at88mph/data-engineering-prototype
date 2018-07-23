@@ -95,7 +95,7 @@ spec:
         resources:
           requests:
             memory: "1Gi"
-            cpu: "1.0"          
+            cpu: "0.8"          
 #        readinessProbe:
 #          initialDelaySeconds: 5
 #          timeoutSeconds: 5
@@ -139,7 +139,7 @@ spec:
         resources:
           requests:
             memory: "2Gi"
-            cpu: "1.2"          
+            cpu: "0.8"
       volumes:
       - name: airflow-dags
         persistentVolumeClaim:
