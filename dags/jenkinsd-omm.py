@@ -23,7 +23,7 @@ config = {'working_directory': '/root/airflow',
           'use_local_files': False,
           'logging_level': 'DEBUG',
           'task_types': 'TaskType.INGEST'}
-limit = '200'
+limit = '10'
 docker_image_tag = 'client5'
 
 default_args = {
@@ -62,7 +62,7 @@ def op_commands(uri, **kwargs):
     return KubernetesPodOperator(
                 namespace='default',
                 task_id='kube_{}'.format(sanitized_artifact_uri),
-                image='ubuntu:18.04',
+                image='ubuntu:18.10',
                 in_cluster=True,
                 get_logs=True,
                 cmds=['bash', '-cx'],
