@@ -28,9 +28,9 @@ else
   echo "Deploying ~/data-engineering-prototype/dags/${INPUT_FILE}."
 fi
 
-AIRFLOW_POD=$(kubectl get pods | grep ^airflow | awk '{print $1}')
+AIRFLOW_POD=$(kubectl get pods | grep ^airflow.*2\/2 | awk '{print $1}')
 
-kubectl cp ~/data-engineering-prototype/dags/${INPUT_FILE} ${AIRFLOW_POD}:/root/airflow/dags -c scheduler -v 6
+kubectl cp ${HOME}/data-engineering-prototype/dags/${INPUT_FILE} ${AIRFLOW_POD}:/root/airflow/dags -c scheduler -v 6
 
 for i in {4..6}; do
   HOST="10.0.0.${i}"
