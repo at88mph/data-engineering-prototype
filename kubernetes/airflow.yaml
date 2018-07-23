@@ -92,6 +92,10 @@ spec:
           mountPath: /root/airflow/dags
         - name: airflow-logs
           mountPath: /root/airflow/logs
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1.0"          
 #        readinessProbe:
 #          initialDelaySeconds: 5
 #          timeoutSeconds: 5
@@ -132,6 +136,10 @@ spec:
           mountPath: /root/airflow/logs
         - name: docker-sock-volume
           mountPath: /var/run/docker.sock
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1.2"          
       volumes:
       - name: airflow-dags
         persistentVolumeClaim:
