@@ -23,7 +23,7 @@ config = {'working_directory': '/root/airflow',
           'use_local_files': False,
           'logging_level': 'DEBUG',
           'task_types': 'TaskType.INGEST'}
-limit = '10'
+limit = '100'
 docker_image_tag = 'client5'
 
 default_args = {
@@ -70,7 +70,6 @@ def op_commands(uri, **kwargs):
                 arguments=['echo', 'Hello world - {}'.format(sanitized_artifact_uri)],
                 dag=dag)            
 
-# artifact_uris_operator = PythonOperator(task_id='get_artifact_uris', python_callable=get_artifact_uris, dag=dag)
 start = DummyOperator(task_id='start', dag=dag)
 complete = DummyOperator(task_id='complete', dag=dag)
 
