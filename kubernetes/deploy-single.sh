@@ -18,7 +18,7 @@
 #  under the License.                                           *
 
 IMAGE=${1:-opencadc/airflow}
-TAG=${2:-latest}
+TAG=${2:-1.10.0}
 DIRNAME=$(cd "$(dirname "$0")"; pwd)
 
 $DIRNAME/remove-kube.sh
