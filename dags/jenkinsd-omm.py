@@ -52,11 +52,9 @@ def get_artifact_uris(**kwargs):
                 "AND Observation.lastModified < '2018-07-01 00:00:00.000' " \
                 "LIMIT " + limit
     data = {'QUERY': query_meta, 'REQUEST': 'doQuery', 'LANG': 'ADQL', 'FORMAT': 'csv'}
-    base_connection = BaseHook.get_connection("tap-omm")
-    http_connection = HttpHook(base_connection)
-    http_connection.data = parse.urlencode(data)
+    http_connection = HttpHook(method='GET', http_conn_id='tap-omm')
 
-    with http_connection.run(base_connection.extra) as response:
+    with http_connection.run('/tap/sync?', parse.urlencode(data)) as response:
         return response.read().decode('utf-8').split('\n')
 
 def op_commands(uri, **kwargs):    
