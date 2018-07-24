@@ -40,7 +40,7 @@ default_args = {
 dag = DAG(dag_id='jenkinsd-omm-{}'.format(limit), default_args=default_args, schedule_interval=None)
 
 output_cmd = """
-    bash -cx 'echo \"{{ params.uri }}\"'
+    echo "{{ params.uri }}"
 """
 
 def get_artifact_uris(**kwargs):
