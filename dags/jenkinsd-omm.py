@@ -55,7 +55,7 @@ def get_artifact_uris(**kwargs):
     connection = HttpHook(BaseHook.get_connection("tap-omm"))
     connection.data = parse.urlencode(data)
 
-    with connection.run() as response:
+    with connection.run(connection.extra) as response:
         return response.read().decode('utf-8').split('\n')
 
 def op_commands(uri, **kwargs):    
