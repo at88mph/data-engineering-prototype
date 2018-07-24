@@ -18,7 +18,7 @@
 FROM python:3.6-stretch
 
 ENV DEBIAN_FRONTEND=noninteractive
-ARG VERSION=1.10.0.rc2
+ARG VERSION=1.10.0rc2
 
 # install deps
 RUN apt-get update -y && apt-get install -y \
