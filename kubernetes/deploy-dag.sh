@@ -37,8 +37,8 @@ kubectl cp ${HOME}/data-engineering-prototype/dags/${INPUT_FILE} ${WEBSERVER_POD
 for i in {4..6}; do
   HOST="10.0.0.${i}"
   echo "Sending ${INPUT_FILE} to ${HOST}";
-  ssh ${HOST} 'sudo rm -f /mnt/airflow-dags/${INPUT_FILE}';
-  ssh ${HOST} 'sudo touch /mnt/airflow-dags/${INPUT_FILE}';
-  ssh ${HOST} 'sudo chown ubuntu:ubuntu /mnt/airflow-dags/${INPUT_FILE}';
+  ssh ${HOST} 'sudo rm -f /mnt/airflow-dags/'${INPUT_FILE};
+  ssh ${HOST} 'sudo touch /mnt/airflow-dags/'${INPUT_FILE};
+  ssh ${HOST} 'sudo chown ubuntu:ubuntu /mnt/airflow-dags/'${INPUT_FILE};
   scp ~/data-engineering-prototype/dags/${INPUT_FILE} 10.0.0.${i}:/mnt/airflow-dags/;
 done
