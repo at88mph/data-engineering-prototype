@@ -51,9 +51,9 @@ def get_artifact_uris(**kwargs):
                 "AND Artifact.uri like 'ad:OMM/%' " \
                 "AND Observation.lastModified < '2018-07-01 00:00:00.000' " \
                 "LIMIT " + limit
-    data = {'QUERY': parse.urlencode(query_meta), 'REQUEST': 'doQuery', 'LANG': 'ADQL', 'FORMAT': 'csv'}
+    data = {'QUERY': query_meta, 'REQUEST': 'doQuery', 'LANG': 'ADQL', 'FORMAT': 'csv'}
     connection = HttpHook(BaseHook.get_connection("tap-omm"))
-    connection.data = data
+    connection.data = parse.urlencode(data)
 
     with connection.run() as response:
         return response.read().decode('utf-8').split('\n')
