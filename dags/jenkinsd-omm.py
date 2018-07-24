@@ -70,7 +70,7 @@ def op_commands(uri, **kwargs):
                 in_cluster=True,
                 get_logs=True,
                 cmds=['echo'],
-                arguments=['"{}"'.format(sanitized_artifact_uri)],
+                arguments=['{}'.format(sanitized_artifact_uri)],
                 name='airflow-test-pod',            
                 dag=dag)            
 
