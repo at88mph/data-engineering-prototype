@@ -39,9 +39,7 @@ default_args = {
 
 dag = DAG(dag_id='jenkinsd-omm-{}'.format(limit), default_args=default_args, schedule_interval=None)
 
-output_cmd = """
-    echo "{{ params.uri }}"
-"""
+output_cmd = """echo "{{ params.uri }}" """
 
 def get_artifact_uris(**kwargs):
     query_meta = "SELECT Artifact.uri " \
