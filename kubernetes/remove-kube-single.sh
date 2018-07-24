@@ -5,6 +5,7 @@ DIRNAME=$(cd "$(dirname "$0")"; pwd)
 kubectl delete -f $DIRNAME/postgres.yaml
 kubectl delete -f $DIRNAME/airflow.yaml
 kubectl delete -f $DIRNAME/secrets.yaml
+kubectl delete -f $DIRNAME/volumes.yaml
 
 # Extra cleanup for left over pods.
 kubectl delete deployments --all

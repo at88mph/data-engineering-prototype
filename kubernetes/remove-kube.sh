@@ -6,6 +6,7 @@ kubectl delete -f $DIRNAME/postgres.yaml
 kubectl delete -f $DIRNAME/airflow-webserver.yaml
 kubectl delete -f $DIRNAME/airflow-scheduler.yaml
 kubectl delete -f $DIRNAME/secrets.yaml
+kubectl delete -f $DIRNAME/volumes.yaml
 
 # Extra cleanup for left over pods.
 kubectl delete deployments --all
