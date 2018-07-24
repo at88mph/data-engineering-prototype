@@ -69,7 +69,7 @@ def op_commands(uri, **kwargs):
                 get_logs=True,
                 cmds=['bash', '-cx'],
                 name="airflow-test-pod",
-                arguments=['echo', 'Kuber => {}'.format(sanitized_artifact_uri)],
+                arguments=['echo', 'kuber_{}'.format(sanitized_artifact_uri)],
                 dag=dag)            
 
 complete = DummyOperator(task_id='complete', dag=dag)
