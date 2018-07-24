@@ -55,7 +55,7 @@ def get_artifact_uris(**kwargs):
     http_connection = HttpHook(method='GET', http_conn_id='tap-omm')
 
     with http_connection.run('/tap/sync?', parse.urlencode(data)) as response:
-        return response.text.decode('utf-8').split('\n')
+        return response.text.split('\n')
 
 def op_commands(uri, **kwargs):    
     artifact_uri = uri.split('/')[1].strip()
