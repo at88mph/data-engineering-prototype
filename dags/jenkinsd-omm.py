@@ -39,7 +39,9 @@ default_args = {
 
 dag = DAG(dag_id='jenkinsd-omm-{}'.format(limit), default_args=default_args, schedule_interval=None)
 
-output_cmd = """echo "{{ params.uri }}" """
+output_cmd = """
+echo "{{ params.uri }}"
+"""
 
 def get_artifact_uris(**kwargs):
     query_meta = "SELECT Artifact.uri " \
@@ -72,7 +74,7 @@ def op_commands(uri, **kwargs):
                 image='ubuntu:18.10',
                 in_cluster=True,
                 get_logs=True,
-                cmds=[output_cmd],
+                cmds=output_cmd,
                 name='airflow-test-pod',
                 params={'uri': sanitized_artifact_uri},
                 dag=dag)            
