@@ -63,8 +63,10 @@ def get_artifact_uris(**kwargs):
 def op_commands(uri, **kwargs):    
     artifact_uri = uri.split('/')[1].strip()
     sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
-    return BashOperator(task_id='bash_{}'.format(sanitized_artifact_uri),
-                        bash_command=output_cmd, params={'uri': sanitized_artifact_uri}, dag=dag)
+    output = 'bash_output_{}'.format(sanitized_artifact_uri)
+    task_id = 'bash_{}'.format(sanitized_artifact_uri)
+    logging.info('Output is {}'.format(output))    
+    return BashOperator(task_id=task_id, bash_command=output_cmd, params={'uri': sanitized_artifact_uri}, dag=dag)
     # output = 'kuber_{}'.format(sanitized_artifact_uri)
     # task_id = 'kube_{}'.format(sanitized_artifact_uri)
     # logging.info('Output is {}'.format(output))
