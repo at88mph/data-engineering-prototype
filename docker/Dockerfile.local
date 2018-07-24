@@ -1,5 +1,3 @@
-#!/bin/bash
-#
 #  Licensed to the Apache Software Foundation (ASF) under one   *
 #  or more contributor license agreements.  See the NOTICE file *
 #  distributed with this work for additional information        *
@@ -17,26 +15,41 @@
 #  specific language governing permissions and limitations      *
 #  under the License.                                           *
 
-INPUT_FILE=${1}
+FROM python:3.6-stretch
 
-if [[ "${INPUT_FILE}" == "" || ! -f "${HOME}/data-engineering-prototype/dags/${INPUT_FILE}" ]];
-then
-  echo "No input file provided.  Ensure ~/data-engineering-prototype/dags/${INPUT_FILE} exists."
-  echo "Usage: deploy-dag-single.sh my-dag-file.py"
-  exit -1
-else
-  echo "Deploying ~/data-engineering-prototype/dags/${INPUT_FILE}."
-fi
+ENV DEBIAN_FRONTEND=noninteractive
+ARG VERSION=1.10.0
 
-AIRFLOW_POD=$(kubectl get pods | grep ^airflow.*2\/2 | awk '{print $1}')
+# install deps
+RUN apt-get update -y && apt-get install -y \
+        wget \
+        libczmq-dev \
+        curl \
+        libssl-dev \
+        inetutils-telnet \
+        bind9utils \
+        zip \
+        unzip \
+    && apt-get clean \
+    && apt-get purge -y python2.7 \
+    && apt-get -y --purge autoremove
 
-kubectl cp ${HOME}/data-engineering-prototype/dags/${INPUT_FILE} ${AIRFLOW_POD}:/root/airflow/dags -c scheduler -v 6
+RUN pip install --upgrade pip
 
-for i in {4..6}; do
-  HOST="10.0.0.${i}"
-  echo "Sending ${INPUT_FILE} to ${HOST}";
-  ssh ${HOST} 'sudo rm -f /mnt/airflow-dags/${INPUT_FILE}';
-  ssh ${HOST} 'sudo touch /mnt/airflow-dags/${INPUT_FILE}';
-  ssh ${HOST} 'sudo chown ubuntu:ubuntu /mnt/airflow-dags/${INPUT_FILE}';
-  scp ~/data-engineering-prototype/dags/${INPUT_FILE} 10.0.0.${i}:/mnt/airflow-dags/;
-done
+COPY requirements.txt ./
+
+# Since we install vanilla Airflow, we also want to have support for Postgres and Kubernetes
+RUN pip install -r requirements.txt
+
+# install airflow
+ADD apache-airflow-${VERSION}.tar.gz /tmp/
+RUN cd /tmp/apache-airflow-${VERSION} \
+    && rm -rf airflow/example_dags \
+    && python setup.py install
+
+COPY airflow-env-init.sh /tmp/airflow-env-init.sh
+
+COPY bootstrap.sh /bootstrap.sh
+RUN chmod +x /bootstrap.sh
+
+ENTRYPOINT ["/bootstrap.sh"]
