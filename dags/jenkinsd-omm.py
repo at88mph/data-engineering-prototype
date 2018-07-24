@@ -61,15 +61,18 @@ def op_commands(uri, **kwargs):
     sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
     # return BashOperator(task_id='bash_{}'.format(sanitized_artifact_uri),
     #                     bash_command='echo {}'.format(sanitized_artifact_uri), dag=dag)
+    output = 'kuber_{}'.format(sanitized_artifact_uri)
+    task_id = 'kube_{}'.format(sanitized_artifact_uri)
+    logging.info('Output is {}'.format(output))
     return KubernetesPodOperator(
                 namespace='default',
-                task_id='kube_{}'.format(sanitized_artifact_uri),
+                task_id=task_id,
                 image='ubuntu:18.10',
                 in_cluster=True,
                 get_logs=True,
                 cmds=['bash', '-cx'],
-                name="airflow-test-pod",
-                arguments=['echo', 'kuber_{}'.format(sanitized_artifact_uri)],
+                name='airflow-test-pod',
+                arguments=['echo', output],
                 dag=dag)            
 
 complete = DummyOperator(task_id='complete', dag=dag)
