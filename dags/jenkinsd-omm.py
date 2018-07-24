@@ -69,7 +69,8 @@ def op_commands(uri, **kwargs):
                 image='ubuntu:18.10',
                 in_cluster=True,
                 get_logs=True,
-                cmds=['echo', '"{}"'.format(sanitized_artifact_uri)],
+                cmds=['echo'],
+                arguments=['"{}"'.format(sanitized_artifact_uri)],
                 name='airflow-test-pod',            
                 dag=dag)            
 
