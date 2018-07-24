@@ -23,7 +23,7 @@ config = {'working_directory': '/root/airflow',
           'use_local_files': False,
           'logging_level': 'DEBUG',
           'task_types': 'TaskType.INGEST'}
-limit = '1000'
+limit = '10'
 docker_image_tag = 'client5'
 
 default_args = {
@@ -72,7 +72,6 @@ def op_commands(uri, **kwargs):
                 arguments=['echo', 'Kuber => {}'.format(sanitized_artifact_uri)],
                 dag=dag)            
 
-start = DummyOperator(task_id='start', dag=dag)
 complete = DummyOperator(task_id='complete', dag=dag)
 
 artifact_uri_array = get_artifact_uris()
@@ -81,4 +80,4 @@ logging.info('Found {} items.'.format(len(artifact_uri_array)))
 # Skip the first item as it's the column header.
 for uri in artifact_uri_array[1:]:
     if uri:
-        start >> op_commands(uri) >> complete
+        op_commands(uri) >> complete
