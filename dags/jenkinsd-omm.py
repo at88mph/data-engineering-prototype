@@ -63,21 +63,21 @@ def get_artifact_uris(**kwargs):
 def op_commands(uri, **kwargs):    
     artifact_uri = uri.split('/')[1].strip()
     sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
-    # return BashOperator(task_id='bash_{}'.format(sanitized_artifact_uri),
-    #                     bash_command='echo {}'.format(sanitized_artifact_uri), dag=dag)
-    output = 'kuber_{}'.format(sanitized_artifact_uri)
-    task_id = 'kube_{}'.format(sanitized_artifact_uri)
-    logging.info('Output is {}'.format(output))
-    return KubernetesPodOperator(
-                namespace='default',
-                task_id=task_id,
-                image='ubuntu:18.10',
-                in_cluster=True,
-                get_logs=True,
-                cmds=output_cmd,
-                name='airflow-test-pod',
-                params={'uri': sanitized_artifact_uri},
-                dag=dag)            
+    return BashOperator(task_id='bash_{}'.format(sanitized_artifact_uri),
+                        bash_command=output_cmd, params={'uri': sanitized_artifact_uri}, dag=dag)
+    # output = 'kuber_{}'.format(sanitized_artifact_uri)
+    # task_id = 'kube_{}'.format(sanitized_artifact_uri)
+    # logging.info('Output is {}'.format(output))
+    # return KubernetesPodOperator(
+    #             namespace='default',
+    #             task_id=task_id,
+    #             image='ubuntu:18.10',
+    #             in_cluster=True,
+    #             get_logs=True,
+    #             cmds=output_cmd,
+    #             name='airflow-test-pod',
+    #             params={'uri': sanitized_artifact_uri},
+    #             dag=dag)            
 
 complete = DummyOperator(task_id='complete', dag=dag)
 
