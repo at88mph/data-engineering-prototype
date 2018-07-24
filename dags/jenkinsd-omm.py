@@ -39,6 +39,10 @@ default_args = {
 
 dag = DAG(dag_id='jenkinsd-omm-{}'.format(limit), default_args=default_args, schedule_interval=None)
 
+output_cmd = """
+    bash -cx "echo {{ params.uri }}"
+"""
+
 def get_artifact_uris(**kwargs):
     query_meta = "SELECT Artifact.uri " \
                 "FROM caom2.Artifact AS Artifact " \
@@ -70,9 +74,9 @@ def op_commands(uri, **kwargs):
                 image='ubuntu:18.10',
                 in_cluster=True,
                 get_logs=True,
-                cmds=['bash', '-cx'],
+                cmds=[output_cmd],
                 name='airflow-test-pod',
-                arguments=['echo', output],
+                params={'uri': sanitized_artifact_uri},
                 dag=dag)            
 
 complete = DummyOperator(task_id='complete', dag=dag)
