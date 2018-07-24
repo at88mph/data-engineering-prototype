@@ -37,7 +37,7 @@ default_args = {
     'provide_context': True
 }
 
-dag = DAG(dag_id='jenkinsd-omm', default_args=default_args, schedule_interval=None)
+dag = DAG(dag_id='jenkinsd-omm-{}'.format(limit), default_args=default_args, schedule_interval=None)
 
 def get_artifact_uris(**kwargs):
     query_meta = "SELECT Artifact.uri " \
@@ -59,16 +59,18 @@ def get_artifact_uris(**kwargs):
 def op_commands(uri, **kwargs):    
     artifact_uri = uri.split('/')[1].strip()
     sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
-    return KubernetesPodOperator(
-                namespace='default',
-                task_id='kube_{}'.format(sanitized_artifact_uri),
-                image='ubuntu:18.10',
-                in_cluster=True,
-                get_logs=True,
-                cmds=['bash', '-cx'],
-                name="airflow-test-pod",
-                arguments=['echo', 'Hello world - {}'.format(sanitized_artifact_uri)],
-                dag=dag)            
+    return BashOperator(task_id='bash_{}'.format(sanitized_artifact_uri),
+                        bash_command='echo {}'.format(sanitized_artifact_uri), dag=dag)
+    # return KubernetesPodOperator(
+    #             namespace='default',
+    #             task_id='kube_{}'.format(sanitized_artifact_uri),
+    #             image='ubuntu:18.10',
+    #             in_cluster=True,
+    #             get_logs=True,
+    #             cmds=['bash', '-cx'],
+    #             name="airflow-test-pod",
+    #             arguments=['echo', 'Hello world - {}'.format(sanitized_artifact_uri)],
+    #             dag=dag)            
 
 start = DummyOperator(task_id='start', dag=dag)
 complete = DummyOperator(task_id='complete', dag=dag)
