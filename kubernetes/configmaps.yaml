@@ -34,7 +34,7 @@ data:
     fernet_key = wR9jCYKiHftF5c6uKE7hRvMXhUrZ-beztxshrrkB6E8=
 
     [scheduler]
-    dag_dir_list_interval = 300
+    dag_dir_list_interval = 60
     child_process_log_directory = /root/airflow/logs/scheduler
     # Task instances listen for external kill signal (when you clear tasks
     # from the CLI or the UI), this defines the frequency at which they should
