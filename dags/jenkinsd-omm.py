@@ -10,13 +10,13 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.models import DAG
 from airflow.models import DagModel
 from airflow.hooks.base_hook import BaseHook
+from airflow.hooks.http_hook import HttpHook
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from urllib import parse as parse
 from urllib import request as request
 
 
-#connection = BaseHook.get_connection("caom2-cred")
 #cert = connection.extra
 config = {'working_directory': '/root/airflow',
           'resource_id': 'ivo://cadc.nrc.ca/sc2repo',
@@ -28,7 +28,7 @@ docker_image_tag = 'client5'
 
 default_args = {
     'owner': 'airflow',
-    'start_date': airflow.utils.dates.days_ago(2),
+    'start_date': datetime(2019, 11, 25),
     'depends_on_past': False,
     'email_on_failure': False,
     'email_on_retry': False,
@@ -51,9 +51,11 @@ def get_artifact_uris(**kwargs):
                 "AND Artifact.uri like 'ad:OMM/%' " \
                 "AND Observation.lastModified < '2018-07-01 00:00:00.000' " \
                 "LIMIT " + limit
-    data = {'QUERY': query_meta, 'REQUEST': 'doQuery', 'LANG': 'ADQL', 'FORMAT': 'csv'}
-    url = 'http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/tap/sync?{}'.format(parse.urlencode(data))
-    with request.urlopen(url) as response:
+    data = {'QUERY': parse.urlencode(query_meta), 'REQUEST': 'doQuery', 'LANG': 'ADQL', 'FORMAT': 'csv'}
+    connection = HttpHook(BaseHook.get_connection("tap-omm"))
+    connection.data = data
+
+    with connection.run() as response:
         return response.read().decode('utf-8').split('\n')
 
 def op_commands(uri, **kwargs):    
