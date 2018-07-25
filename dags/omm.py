@@ -51,7 +51,7 @@ def populate_inputs(**kwargs):
             arr = response.text.split('\n')
             count = len(arr)
             logging.info('Found {} items.'.format(count))
-            for uri in arr:
+            for uri in arr[1:]:
                 if uri:                
                     artifact_uri = uri.split('/')[1].strip()
                     sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
