@@ -1,17 +1,18 @@
 import logging
 
+from datetime import datetime
 from airflow.models import DAG
 from airflow.contrib.hooks.redis_hook import RedisHook
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 
-def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval, redis_list_name):
-    redis = RedisHook(redis_conn_id='redis_default')
+def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval, redis_list_name):   
     sub_dag = DAG(
-      '%s.%s' % (parent_dag_name, child_dag_name),
+      '{}.{}'.format(parent_dag_name, child_dag_name),
       schedule_interval=schedule_interval,
-      start_date=start_date,
-    )    
+      start_date=datetime(2019, 11, 25),
+    )
+    redis = RedisHook(redis_conn_id='redis_default')
     redis_conn = redis.get_conn()
     start_sub_dag = DummyOperator(task_id='{}.start'.format(sub_dag.dag_id), dag=sub_dag)
     complete_sub_dag = DummyOperator(task_id='{}.complete'.format(sub_dag.dag_id), dag=sub_dag)
