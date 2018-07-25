@@ -63,20 +63,21 @@ def populate_inputs(**kwargs):
 
     return 'Finished inserting {} items into Redis.'.format(count)
 
+
 def sub_dag(parent_dag_id, child_dag_id, **kwargs):
     redis = RedisHook(redis_conn_id='redis_default')
-    sub_dag = DAG(dag_id=child_dag_id, default_args=default_args,
-                  schedule_interval=None, max_active_runs=1)
+    sub_dag = DAG(dag_id=child_dag_id, default_args=default_args, schedule_interval=None)
     redis_conn = redis.get_conn()
-
-    start_sub_dag = DummyOperator(task_id='{}.{}.start'.format(parent_dag_id, sub_dag.dag_id), dag=sub_dag)
-    complete_sub_dag = DummyOperator(task_id='{}.{}.complete'.format(parent_dag_id, sub_dag.dag_id), dag=sub_dag)
+    start_sub_dag = DummyOperator(task_id='{}.{}.start'.format(parent_dag_id, child_dag_id), dag=sub_dag)
+    complete_sub_dag = DummyOperator(task_id='{}.{}.complete'.format(parent_dag_id, child_dag_id), dag=sub_dag)
+    logging.info('Looping items.')
     uri_key = redis_conn.lpop('omm')
-    while uri_key:
+    while uri_key:        
         decoded_key = uri_key.decode('utf-8')
+        logging.info('Next key: {}'.format(decoded_key))
         task = KubernetesPodOperator(
                  namespace='default',
-                 task_id='{}.{}.{}'.format(parent_dag_id, sub_dag.dag_id, decoded_key),
+                 task_id='{}.{}.{}'.format(parent_dag_id, child_dag_id, decoded_key),
                  image='ubuntu:18.10',
                  in_cluster=True,                 
                  get_logs=True,
@@ -88,31 +89,10 @@ def sub_dag(parent_dag_id, child_dag_id, **kwargs):
         task.set_downstream(complete_sub_dag)
         uri_key = redis_conn.lpop('omm')
 
-    return sub_dag
-
-# def op_commands(uri, **kwargs):    
-#     artifact_uri = uri.split('/')[1].strip()
-#     sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
-#     output = 'kube_output_{}'.format(sanitized_artifact_uri)
-#     task_id = 'kube_{}'.format(sanitized_artifact_uri)
-#     logging.info('Output is {}'.format(output))    
-#     return KubernetesPodOperator(
-#                 namespace='default',
-#                 task_id=task_id,
-#                 image='ubuntu:18.10',
-#                 in_cluster=True,
-#                 get_logs=True,
-#                 cmds=['echo'],
-#                 arguments=['{}'.format(sanitized_artifact_uri)],
-#                 name='airflow-test-pod',            
-#                 dag=dag)            
+    return sub_dag         
 
 # start = DummyOperator(task_id='start', dag=dag)
-start = PythonOperator(
-    task_id='populate_inputs',
-    python_callable=populate_inputs,
-    dag=dag)
-
+start = PythonOperator(task_id='populate_inputs', python_callable=populate_inputs, dag=dag)
 sub_dag_task_id = 'run_omm'
 sub_dag_id = '{}.{}'.format(dag.dag_id, sub_dag_task_id)
 sub_dag = sub_dag(dag.dag_id, sub_dag_id)
