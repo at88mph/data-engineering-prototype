@@ -51,12 +51,15 @@ def populate_inputs(**kwargs):
         arr = response.text.split('\n')
         count = len(arr)
         logging.info('Found {} items.'.format(count))
+        sanitized_uris = []
         for uri in arr[1:]:
             if uri:                
                 artifact_uri = uri.split('/')[1].strip()
                 sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
                 logging.info('Output is {}'.format(sanitized_artifact_uri))
-                redis.get_conn().set('{}.{}'.format(dag.dag_id, sanitized_artifact_uri), sanitized_artifact_uri)
+                sanitized_uris.append(sanitized_artifact_uri)
+   
+    redis.get_conn().lpush('omm', sanitized_uris)
 
     return 'Finished inserting {} items into Redis.'.format(count)
 
@@ -64,11 +67,12 @@ def sub_dag(parent_dag_id, child_dag_id, **kwargs):
     redis = RedisHook(redis_conn_id='redis_default')
     sub_dag = DAG(dag_id=child_dag_id, default_args=default_args,
                   schedule_interval=None, max_active_runs=1)
-    start_sub_dag = DummyOperator(task_id='{}.{}.start'.format(parent_dag_id, sub_dag.dag_id), dag=sub_dag)
     redis_conn = redis.get_conn()
-    uri_keys = redis_conn.scan_iter('{}.*'.format(parent_dag_id))
-    for uri_key in uri_keys:
-        redis_conn.delete(uri_key)
+
+    start_sub_dag = DummyOperator(task_id='{}.{}.start'.format(parent_dag_id, sub_dag.dag_id), dag=sub_dag)
+    complete_sub_dag = DummyOperator(task_id='{}.{}.complete'.format(parent_dag_id, sub_dag.dag_id), dag=sub_dag)
+    uri_key = redis_conn.lpop('omm')
+    while uri_key:
         decoded_key = uri_key.decode('utf-8')
         task = KubernetesPodOperator(
                  namespace='default',
@@ -81,6 +85,8 @@ def sub_dag(parent_dag_id, child_dag_id, **kwargs):
                  name='airflow-test-pod',            
                  dag=sub_dag)
         task.set_upstream(start_sub_dag)
+        task.set_downstream(complete_sub_dag)
+        uri_key = redis_conn.lpop('omm')
 
     return sub_dag
 
