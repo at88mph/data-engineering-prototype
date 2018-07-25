@@ -65,7 +65,7 @@ def sub_dag(parent_dag_id, **kwargs):
     sub_dag = DAG(dag_id='{}.run_omm'.format(parent_dag_id), default_args=default_args,
                   schedule_interval=None, max_active_runs=1)
     start_sub_dag = DummyOperator(task_id='{}.{}.start'.format(parent_dag_id, sub_dag.dag_id))
-    uri_keys = redis.scan_iter('{}.*'.format(parent_dag_id))
+    uri_keys = redis.get_conn().scan_iter('{}.*'.format(parent_dag_id))
     for uri_key in uri_keys:
         task = KubernetesPodOperator(
                  namespace='default',
