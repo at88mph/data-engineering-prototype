@@ -26,12 +26,14 @@ do
   NUM_AIRFLOW_SCHEDULER_READY=$(echo $PODS | grep airflow-scheduler | awk '{print $2}' | grep -E '([0-9])\/(\1)' | wc -l | xargs)
   NUM_AIRFLOW_WEBSERVER_READY=$(echo $PODS | grep airflow-webserver | awk '{print $2}' | grep -E '([0-9])\/(\1)' | wc -l | xargs)  
   NUM_POSTGRES_READY=$(echo $PODS | grep postgres-airflow | awk '{print $2}' | grep -E '([0-9])\/(\1)' | wc -l | xargs)
-  if [ "$NUM_AIRFLOW_SCHEDULER_READY" == "1" ] && [ "$NUM_AIRFLOW_WEBSERVER_READY" == "1" ] && [ "$NUM_POSTGRES_READY" == "1" ]; then
+  NUM_REDIS_READY=$(echo $PODS | grep redis | awk '{print $2}' | grep -E '([0-9])\/(\1)' | wc -l | xargs)
+  if [ "$NUM_AIRFLOW_SCHEDULER_READY" == "1" ] && [ "$NUM_AIRFLOW_WEBSERVER_READY" == "1" ] && [ "$NUM_POSTGRES_READY" == "1" ] && [ "$NUM_REDIS_READY" == "1" ]; then
     break
   else
     echo "Airflow Scheduler instance count is $NUM_AIRFLOW_SCHEDULER_READY"
     echo "Airflow Web Server instance count is $NUM_AIRFLOW_WEBSERVER_READY"
     echo "PostgreSQL instance count is $NUM_POSTGRES_READY"
+    echo "Redis instance count is $NUM_REDIS_READY"
   fi
   sleep 4
 done

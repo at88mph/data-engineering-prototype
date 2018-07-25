@@ -47,28 +47,29 @@ def populate_inputs(**kwargs):
     with http_connection.run('/tap/sync?', parse.urlencode(data)) as response:
         arr = response.text.split('\n')
         for uri in arr:
-            if uri:
+            if uri:                
                 artifact_uri = uri.split('/')[1].strip()
                 sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
+                logging.info('Output is {}'.format(sanitized_artifact_uri))
                 redis.get_conn().set('{}.{}'.format(dag.dag_id, sanitized_artifact_uri))
 
 
-def op_commands(uri, **kwargs):    
-    artifact_uri = uri.split('/')[1].strip()
-    sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
-    output = 'kube_output_{}'.format(sanitized_artifact_uri)
-    task_id = 'kube_{}'.format(sanitized_artifact_uri)
-    logging.info('Output is {}'.format(output))    
-    return KubernetesPodOperator(
-                namespace='default',
-                task_id=task_id,
-                image='ubuntu:18.10',
-                in_cluster=True,
-                get_logs=True,
-                cmds=['echo'],
-                arguments=['{}'.format(sanitized_artifact_uri)],
-                name='airflow-test-pod',            
-                dag=dag)            
+# def op_commands(uri, **kwargs):    
+#     artifact_uri = uri.split('/')[1].strip()
+#     sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
+#     output = 'kube_output_{}'.format(sanitized_artifact_uri)
+#     task_id = 'kube_{}'.format(sanitized_artifact_uri)
+#     logging.info('Output is {}'.format(output))    
+#     return KubernetesPodOperator(
+#                 namespace='default',
+#                 task_id=task_id,
+#                 image='ubuntu:18.10',
+#                 in_cluster=True,
+#                 get_logs=True,
+#                 cmds=['echo'],
+#                 arguments=['{}'.format(sanitized_artifact_uri)],
+#                 name='airflow-test-pod',            
+#                 dag=dag)            
 
 # start = DummyOperator(task_id='start', dag=dag)
 start = PythonOperator(
