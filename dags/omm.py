@@ -73,6 +73,7 @@ def sub_dag(parent_dag_id, child_dag_id, **kwargs):
                  task_id='{}.{}.{}'.format(parent_dag_id, sub_dag.dag_id, decoded_key),
                  image='ubuntu:18.10',
                  in_cluster=True,
+                 start_date=default_args['start_date'],
                  get_logs=True,
                  cmds=['echo'],
                  arguments=['{}'.format(decoded_key)],
