@@ -104,9 +104,10 @@ start = PythonOperator(
     python_callable=populate_inputs,
     dag=dag)
 
-sub_dag_id = '{}.{}'.format(dag.dag_id, 'run_omm')
+sub_dag_task_id = 'run_omm'
+sub_dag_id = '{}.{}'.format(dag.dag_id, sub_dag_task_id)
 sub_dag = sub_dag(dag.dag_id, sub_dag_id)
-sub_dag_operator = SubDagOperator(subdag=sub_dag, task_id=sub_dag_id, default_args=default_args, dag=dag)
+sub_dag_operator = SubDagOperator(subdag=sub_dag, task_id=sub_dag_task_id, default_args=default_args, dag=dag)
 complete = DummyOperator(task_id='complete', dag=dag)
 
 start >> sub_dag_operator >> complete
