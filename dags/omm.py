@@ -2,6 +2,7 @@ import airflow
 import airflow.settings
 import logging
 import json
+import time
 
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.bash_operator import BashOperator
@@ -37,6 +38,7 @@ default_args = {
 dag = DAG(dag_id='omm', default_args=default_args, schedule_interval=None)
 
 def populate_inputs(**kwargs):
+    time.sleep(5)
     logging.info('Populating inputs.')
     query = Variable.get('omm_input_uri_query')
     redis = RedisHook(redis_conn_id='redis_default')
