@@ -41,7 +41,7 @@ default_args = {
     'provide_context': True
 }
 
-dag = DAG(dag_id='omm', default_args=default_args, schedule_interval=None)
+dag = DAG(dag_id=PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
 
 def populate_inputs(**kwargs):    
     logging.info('Populating inputs.')
