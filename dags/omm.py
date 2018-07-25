@@ -84,11 +84,13 @@ def populate_inputs(**kwargs):
 #                 dag=dag)            
 
 # start = DummyOperator(task_id='start', dag=dag)
-start = PythonOperator(
-    task_id='populate_inputs',
-    python_callable=populate_inputs,
-    dag=dag)
+# start = PythonOperator(
+#     task_id='populate_inputs',
+#     python_callable=populate_inputs,
+#     dag=dag)
 
 complete = DummyOperator(task_id='complete', dag=dag)
 
-start >> complete
+populate_inputs()
+
+complete
