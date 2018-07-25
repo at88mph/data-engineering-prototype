@@ -9,6 +9,7 @@ from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOpera
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.models import DAG, Variable
 from airflow.hooks.http_hook import HttpHook
+from airflow.contrib.hooks.redis_hook import RedisHook
 
 from datetime import datetime, timedelta
 from urllib import parse as parse
@@ -35,13 +36,22 @@ default_args = {
 
 dag = DAG(dag_id='omm', default_args=default_args, schedule_interval=None)
 
-def get_artifact_uris(**kwargs):
+
+def populate_inputs(**kwargs):
     query = Variable.get('omm_input_uri_query')
+    redis = RedisHook(redis_conn_id='redis_default')
+    
     data = {'QUERY': query, 'REQUEST': 'doQuery', 'LANG': 'ADQL', 'FORMAT': 'csv'}
     http_connection = HttpHook(method='GET', http_conn_id='tap_service_host')
 
     with http_connection.run('/tap/sync?', parse.urlencode(data)) as response:
-        return response.text.split('\n')
+        arr = response.text.split('\n')
+        for uri in arr:
+            if uri:
+                artifact_uri = uri.split('/')[1].strip()
+                sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
+                redis.get_conn().set('{}.{}'.format(dag.dag_id, sanitized_artifact_uri))
+
 
 def op_commands(uri, **kwargs):    
     artifact_uri = uri.split('/')[1].strip()
@@ -49,7 +59,6 @@ def op_commands(uri, **kwargs):
     output = 'kube_output_{}'.format(sanitized_artifact_uri)
     task_id = 'kube_{}'.format(sanitized_artifact_uri)
     logging.info('Output is {}'.format(output))    
-    # return BashOperator(task_id=task_id, bash_command=output_cmd, params={'uri': sanitized_artifact_uri}, dag=dag)
     return KubernetesPodOperator(
                 namespace='default',
                 task_id=task_id,
@@ -61,13 +70,13 @@ def op_commands(uri, **kwargs):
                 name='airflow-test-pod',            
                 dag=dag)            
 
-start = DummyOperator(task_id='start', dag=dag)
+# start = DummyOperator(task_id='start', dag=dag)
+start = PythonOperator(
+    task_id='populate_inputs',
+    provide_context=True,
+    python_callable=populate_inputs,
+    dag=dag)
+
 complete = DummyOperator(task_id='complete', dag=dag)
 
-artifact_uri_array = get_artifact_uris()
-logging.info('Found {} items.'.format(len(artifact_uri_array)))
-
-# Skip the first item as it's the column header.
-for uri in artifact_uri_array[1:]:
-    if uri:
-        start >> op_commands(uri) >> complete
+start >> complete

@@ -29,5 +29,6 @@ kubectl apply -f $DIRNAME/postgres.yaml
 kubectl apply -f $DIRNAME/volumes.yaml
 kubectl apply -f $DIRNAME/airflow-scheduler.yaml
 kubectl apply -f $DIRNAME/airflow-webserver.yaml
+kubectl apply -f $DIRNAME/redis.yaml
 
 $DIRNAME/deploy-wait.sh

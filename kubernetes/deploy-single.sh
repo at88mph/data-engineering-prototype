@@ -28,5 +28,6 @@ kubectl apply -f $DIRNAME/configmaps.yaml
 kubectl apply -f $DIRNAME/postgres.yaml
 kubectl apply -f $DIRNAME/volumes.yaml
 kubectl apply -f $DIRNAME/airflow.yaml
+kubectl apply -f $DIRNAME/redis.yaml
 
 $DIRNAME/deploy-wait-single.sh
