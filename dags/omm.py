@@ -59,7 +59,7 @@ def populate_inputs(**kwargs):
                 logging.info('Output is {}'.format(sanitized_artifact_uri))
                 sanitized_uris.append(sanitized_artifact_uri)
    
-    redis.get_conn().lpush('omm', sanitized_uris)
+    redis.get_conn().lpush('list_omm', sanitized_uris)
 
     return 'Finished inserting {} items into Redis.'.format(count)
 
@@ -71,7 +71,7 @@ def sub_dag(parent_dag_id, child_dag_id, **kwargs):
     start_sub_dag = DummyOperator(task_id='{}.start'.format(child_dag_id), dag=sub_dag)
     complete_sub_dag = DummyOperator(task_id='{}.complete'.format(child_dag_id), dag=sub_dag)
     logging.info('Looping items.')
-    uri_key = redis_conn.lpop('omm')
+    uri_key = redis_conn.lpop('list_omm')
     while uri_key:
         decoded_key = uri_key.decode('utf-8')
         logging.info('Next key: {}'.format(decoded_key))
@@ -85,7 +85,7 @@ def sub_dag(parent_dag_id, child_dag_id, **kwargs):
                  arguments=[decoded_key],
                  name='airflow-test-pod',
                  dag=sub_dag)
-        uri_key = redis_conn.lpop('omm')
+        uri_key = redis_conn.lpop('list_omm')
         start_sub_dag >> task >> complete_sub_dag    
 
     return sub_dag         
