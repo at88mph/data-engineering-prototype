@@ -38,8 +38,7 @@ default_args = {
 
 dag = DAG(dag_id='omm', default_args=default_args, schedule_interval=None)
 
-def populate_inputs(**kwargs):
-    time.sleep(5)
+def populate_inputs(**kwargs):    
     logging.info('Populating inputs.')
     query = Variable.get('omm_input_uri_query')
     redis = RedisHook(redis_conn_id='redis_default')
@@ -58,8 +57,12 @@ def populate_inputs(**kwargs):
                 sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
                 logging.info('Output is {}'.format(sanitized_artifact_uri))
                 sanitized_uris.append(sanitized_artifact_uri)
-   
-    redis.get_conn().rpush('list_omm', *sanitized_uris)
+                time.sleep(3)
+        redis.get_conn().rpush('list_omm', *sanitized_uris)
+        redis.get_conn().lrange('list_omm', 0, -1)
+    
+    logging.info('Sleeping...')
+    time.sleep(3)
 
     return 'Finished inserting {} items into Redis.'.format(count)
 
