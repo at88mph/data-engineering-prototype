@@ -13,10 +13,15 @@ from airflow.models import DAG, Variable
 from airflow.hooks.http_hook import HttpHook
 from airflow.contrib.hooks.redis_hook import RedisHook
 
+from omm_subdag import sub_dag
 from datetime import datetime, timedelta
 from urllib import parse as parse
 from urllib import request as request
 
+
+PARENT_DAG_NAME = 'omm'
+CHILD_DAG_NAME = 'run_omm_instance'
+REDIS_LIST_NAME = 'redis_omm'
 
 config = {'working_directory': '/root/airflow',
           'resource_id': 'ivo://cadc.nrc.ca/sc2repo',
@@ -58,47 +63,17 @@ def populate_inputs(**kwargs):
                 logging.info('Output is {}'.format(sanitized_artifact_uri))
                 sanitized_uris.append(sanitized_artifact_uri)
                 time.sleep(3)
-        redis.get_conn().rpush('list_omm', *sanitized_uris)
-        redis.get_conn().lrange('list_omm', 0, -1)
+        redis.get_conn().rpush(REDIS_LIST_NAME, *sanitized_uris)
     
     logging.info('Sleeping...')
     time.sleep(3)
 
-    return 'Finished inserting {} items into Redis.'.format(count)
-
-
-def sub_dag(parent_dag_id, child_dag_id, **kwargs):
-    redis = RedisHook(redis_conn_id='redis_default')
-    sub_dag = DAG(dag_id=child_dag_id, default_args=default_args, schedule_interval=None)
-    redis_conn = redis.get_conn()
-    start_sub_dag = DummyOperator(task_id='{}.start'.format(child_dag_id), dag=sub_dag)
-    complete_sub_dag = DummyOperator(task_id='{}.complete'.format(child_dag_id), dag=sub_dag)
-    logging.info('Looping items.')
-    uri_key = redis_conn.rpop('list_omm')
-    while uri_key:
-        decoded_key = uri_key.decode('utf-8')
-        logging.info('Next key: {}'.format(decoded_key))
-        task = KubernetesPodOperator(
-                 namespace='default',
-                 task_id='{}.{}'.format(child_dag_id, decoded_key),
-                 image='ubuntu:18.10',
-                 in_cluster=True,
-                 get_logs=True,
-                 cmds=['echo'],
-                 arguments=[decoded_key],
-                 name='airflow-test-pod',
-                 dag=sub_dag)
-        uri_key = redis_conn.rpop('list_omm')
-        start_sub_dag >> task >> complete_sub_dag    
-
-    return sub_dag         
+    return 'Finished inserting {} items into Redis.'.format(count)        
 
 # start = DummyOperator(task_id='start', dag=dag)
 start = PythonOperator(task_id='populate_inputs', python_callable=populate_inputs, dag=dag)
-sub_dag_task_id = 'run_omm'
-sub_dag_id = '{}.{}'.format(dag.dag_id, sub_dag_task_id)
-sub_dag = sub_dag(dag.dag_id, sub_dag_id)
-sub_dag_operator = SubDagOperator(subdag=sub_dag, task_id=sub_dag_task_id, default_args=default_args, dag=dag)
+sub_dag_operator = SubDagOperator(subdag=sub_dag(PARENT_DAG_NAME, CHILD_DAG_NAME, dag.start_date, dag.schedule_interval, REDIS_LIST_NAME),
+                                  task_id=CHILD_DAG_NAME, dag=dag)
 complete = DummyOperator(task_id='complete', dag=dag)
 
 start >> sub_dag_operator >> complete
