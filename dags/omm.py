@@ -46,16 +46,22 @@ def populate_inputs(**kwargs):
     http_connection = HttpHook(method='GET', http_conn_id='tap_service_host')
     count = -1
 
-    with http_connection.run('/tap/sync?', parse.urlencode(data)) as response:
-        arr = response.text.split('\n')
-        count = len(arr)
-        logging.info('Found {} items.'.format(count))
-        for uri in arr:
-            if uri:                
-                artifact_uri = uri.split('/')[1].strip()
-                sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
-                logging.info('Output is {}'.format(sanitized_artifact_uri))
-                # redis.get_conn().set('{}.{}'.format(dag.dag_id, sanitized_artifact_uri), sanitized_artifact_uri)
+    try:
+        with http_connection.run('/tap/sync?', parse.urlencode(data)) as response:
+            arr = response.text.split('\n')
+            count = len(arr)
+            logging.info('Found {} items.'.format(count))
+            for uri in arr:
+                if uri:                
+                    artifact_uri = uri.split('/')[1].strip()
+                    sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
+                    logging.info('Output is {}'.format(sanitized_artifact_uri))
+                    redis.get_conn().set('{}.{}'.format(dag.dag_id, sanitized_artifact_uri), sanitized_artifact_uri)
+    except Exception as e:
+        print(type(e))    # the exception instance
+        print(e.args)     # arguments stored in .args
+        print(e)
+        raise e
 
     return 'Finished inserting {} items into Redis.'.format(count)
 
