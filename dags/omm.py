@@ -78,7 +78,7 @@ def sub_dag(parent_dag_id, child_dag_id, **kwargs):
                  arguments=['{}'.format(decoded_key)],
                  name='airflow-test-pod',            
                  dag=sub_dag)
-        task.set_downstream(start_sub_dag)
+        task.set_upstream(start_sub_dag)
 
     return sub_dag
 
