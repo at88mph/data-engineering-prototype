@@ -8,6 +8,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.subdag_operator import SubDagOperator
 from airflow.models import DAG, Variable
 from airflow.hooks.http_hook import HttpHook
 from airflow.contrib.hooks.redis_hook import RedisHook
@@ -59,6 +60,26 @@ def populate_inputs(**kwargs):
 
     return 'Finished inserting {} items into Redis.'.format(count)
 
+def sub_dag(parent_dag_id, **kwargs):
+    redis = RedisHook(redis_conn_id='redis_default')
+    sub_dag = DAG(dag_id='{}.run_omm'.format(parent_dag_id), default_args=default_args,
+                  schedule_interval=None, max_active_runs=1)
+    start_sub_dag = DummyOperator(task_id='{}.{}.start'.format(parent_dag_id, sub_dag.dag_id))
+    uri_keys = redis.scan_iter('{}.*'.format(parent_dag_id))
+    for uri_key in uri_keys:
+        task = KubernetesPodOperator(
+                 namespace='default',
+                 task_id='{}.{}.{}'.format(parent_dag_id, sub_dag.dag_id, uri_key),
+                 image='ubuntu:18.10',
+                 in_cluster=True,
+                 get_logs=True,
+                 cmds=['echo'],
+                 arguments=['{}'.format(uri_key)],
+                 name='airflow-test-pod',            
+                 dag=sub_dag)
+        task.set_downstream(start_sub_dag)
+
+    return sub_dag
 
 # def op_commands(uri, **kwargs):    
 #     artifact_uri = uri.split('/')[1].strip()
@@ -83,6 +104,8 @@ start = PythonOperator(
     python_callable=populate_inputs,
     dag=dag)
 
+sub_dag = sub_dag(dag.dag_id)
+sub_dag_operator = SubDagOperator(subdag=sub_dag, task_id='{}.egl'.format(sub_dag.dag_id), default_args=default_args, dag=dag)
 complete = DummyOperator(task_id='complete', dag=dag)
 
-start >> complete
+start >> sub_dag_operator >> complete
