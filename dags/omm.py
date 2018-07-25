@@ -68,26 +68,25 @@ def sub_dag(parent_dag_id, child_dag_id, **kwargs):
     redis = RedisHook(redis_conn_id='redis_default')
     sub_dag = DAG(dag_id=child_dag_id, default_args=default_args, schedule_interval=None)
     redis_conn = redis.get_conn()
-    start_sub_dag = DummyOperator(task_id='{}.{}.start'.format(parent_dag_id, child_dag_id), dag=sub_dag)
-    complete_sub_dag = DummyOperator(task_id='{}.{}.complete'.format(parent_dag_id, child_dag_id), dag=sub_dag)
+    start_sub_dag = DummyOperator(task_id='{}.start'.format(child_dag_id), dag=sub_dag)
+    complete_sub_dag = DummyOperator(task_id='{}.complete'.format(child_dag_id), dag=sub_dag)
     logging.info('Looping items.')
     uri_key = redis_conn.lpop('omm')
-    while uri_key:        
+    while uri_key:
         decoded_key = uri_key.decode('utf-8')
         logging.info('Next key: {}'.format(decoded_key))
         task = KubernetesPodOperator(
                  namespace='default',
-                 task_id='{}.{}.{}'.format(parent_dag_id, child_dag_id, decoded_key),
+                 task_id='{}.{}'.format(child_dag_id, decoded_key),
                  image='ubuntu:18.10',
-                 in_cluster=True,                 
+                 in_cluster=True,
                  get_logs=True,
                  cmds=['echo'],
-                 arguments=['{}'.format(decoded_key)],
-                 name='airflow-test-pod',            
+                 arguments=[decoded_key],
+                 name='airflow-test-pod',
                  dag=sub_dag)
-        task.set_upstream(start_sub_dag)
-        task.set_downstream(complete_sub_dag)
         uri_key = redis_conn.lpop('omm')
+        start_sub_dag >> task >> complete_sub_dag    
 
     return sub_dag         
 
