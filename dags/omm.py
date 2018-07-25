@@ -36,7 +36,6 @@ default_args = {
 
 dag = DAG(dag_id='omm', default_args=default_args, schedule_interval=None)
 
-
 def populate_inputs(**kwargs):
     logging.info('Populating inputs.')
     query = Variable.get('omm_input_uri_query')
@@ -46,18 +45,20 @@ def populate_inputs(**kwargs):
     http_connection = HttpHook(method='GET', http_conn_id='tap_service_host')
     count = -1
 
-    with http_connection.run('/tap/sync?', parse.urlencode(data)) as response:
-        arr = response.text.split('\n')
-        count = len(arr)
-        logging.info('Found {} items.'.format(count))
-        for uri in arr:
-            if uri:                
-                artifact_uri = uri.split('/')[1].strip()
-                sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
-                logging.info('Output is {}'.format(sanitized_artifact_uri))
-                redis.get_conn().set('{}.{}'.format(dag.dag_id, sanitized_artifact_uri), sanitized_artifact_uri)
+    return query
 
-    return 'Finished inserting {} items into Redis.'.format(count)
+    # with http_connection.run('/tap/sync?', parse.urlencode(data)) as response:
+    #     arr = response.text.split('\n')
+    #     count = len(arr)
+    #     logging.info('Found {} items.'.format(count))
+    #     for uri in arr:
+    #         if uri:                
+    #             artifact_uri = uri.split('/')[1].strip()
+    #             sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
+    #             logging.info('Output is {}'.format(sanitized_artifact_uri))
+    #             redis.get_conn().set('{}.{}'.format(dag.dag_id, sanitized_artifact_uri), sanitized_artifact_uri)
+
+    # return 'Finished inserting {} items into Redis.'.format(count)
 
 
 # def op_commands(uri, **kwargs):    
@@ -80,7 +81,6 @@ def populate_inputs(**kwargs):
 # start = DummyOperator(task_id='start', dag=dag)
 start = PythonOperator(
     task_id='populate_inputs',
-    provide_context=True,
     python_callable=populate_inputs,
     dag=dag)
 
