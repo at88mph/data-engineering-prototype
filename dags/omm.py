@@ -40,25 +40,22 @@ def populate_inputs(**kwargs):
     logging.info('Populating inputs.')
     query = Variable.get('omm_input_uri_query')
     redis = RedisHook(redis_conn_id='redis_default')
-    
     data = {'QUERY': query, 'REQUEST': 'doQuery', 'LANG': 'ADQL', 'FORMAT': 'csv'}
     http_connection = HttpHook(method='GET', http_conn_id='tap_service_host')
     count = -1
 
-    return query
+    with http_connection.run('/tap/sync?', parse.urlencode(data)) as response:
+        arr = response.text.split('\n')
+        count = len(arr)
+        logging.info('Found {} items.'.format(count))
+        for uri in arr:
+            if uri:                
+                artifact_uri = uri.split('/')[1].strip()
+                sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
+                logging.info('Output is {}'.format(sanitized_artifact_uri))
+                # redis.get_conn().set('{}.{}'.format(dag.dag_id, sanitized_artifact_uri), sanitized_artifact_uri)
 
-    # with http_connection.run('/tap/sync?', parse.urlencode(data)) as response:
-    #     arr = response.text.split('\n')
-    #     count = len(arr)
-    #     logging.info('Found {} items.'.format(count))
-    #     for uri in arr:
-    #         if uri:                
-    #             artifact_uri = uri.split('/')[1].strip()
-    #             sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
-    #             logging.info('Output is {}'.format(sanitized_artifact_uri))
-    #             redis.get_conn().set('{}.{}'.format(dag.dag_id, sanitized_artifact_uri), sanitized_artifact_uri)
-
-    # return 'Finished inserting {} items into Redis.'.format(count)
+    return 'Finished inserting {} items into Redis.'.format(count)
 
 
 # def op_commands(uri, **kwargs):    
