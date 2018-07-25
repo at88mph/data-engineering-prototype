@@ -60,9 +60,9 @@ def populate_inputs(**kwargs):
 
     return 'Finished inserting {} items into Redis.'.format(count)
 
-def sub_dag(parent_dag_id, **kwargs):
+def sub_dag(parent_dag_id, child_dag_id, **kwargs):
     redis = RedisHook(redis_conn_id='redis_default')
-    sub_dag = DAG(dag_id='{}.run_omm'.format(parent_dag_id), default_args=default_args,
+    sub_dag = DAG(dag_id=child_dag_id, default_args=default_args,
                   schedule_interval=None, max_active_runs=1)
     start_sub_dag = DummyOperator(task_id='{}.{}.start'.format(parent_dag_id, sub_dag.dag_id))
     uri_keys = redis.get_conn().scan_iter('{}.*'.format(parent_dag_id))
@@ -104,8 +104,9 @@ start = PythonOperator(
     python_callable=populate_inputs,
     dag=dag)
 
-sub_dag = sub_dag(dag.dag_id)
-sub_dag_operator = SubDagOperator(subdag=sub_dag, task_id='{}.egl'.format(sub_dag.dag_id), default_args=default_args, dag=dag)
+sub_dag_id = '{}.{}'.format(dag.dag_id, 'run_omm')
+sub_dag = sub_dag(dag.dag_id, sub_dag_id)
+sub_dag_operator = SubDagOperator(subdag=sub_dag, task_id=sub_dag_id, default_args=default_args, dag=dag)
 complete = DummyOperator(task_id='complete', dag=dag)
 
 start >> sub_dag_operator >> complete
