@@ -64,7 +64,7 @@ def sub_dag(parent_dag_id, child_dag_id, **kwargs):
     redis = RedisHook(redis_conn_id='redis_default')
     sub_dag = DAG(dag_id=child_dag_id, default_args=default_args,
                   schedule_interval=None, max_active_runs=1)
-    start_sub_dag = DummyOperator(task_id='{}.{}.start'.format(parent_dag_id, sub_dag.dag_id))
+    start_sub_dag = DummyOperator(task_id='{}.{}.start'.format(parent_dag_id, sub_dag.dag_id), dag=sub_dag)
     uri_keys = redis.get_conn().scan_iter('{}.*'.format(parent_dag_id))
     for uri_key in uri_keys:
         decoded_key = uri_key.decode('utf-8')
@@ -72,8 +72,7 @@ def sub_dag(parent_dag_id, child_dag_id, **kwargs):
                  namespace='default',
                  task_id='{}.{}.{}'.format(parent_dag_id, sub_dag.dag_id, decoded_key),
                  image='ubuntu:18.10',
-                 in_cluster=True,
-                 start_date=default_args['start_date'],
+                 in_cluster=True,                 
                  get_logs=True,
                  cmds=['echo'],
                  arguments=['{}'.format(decoded_key)],
