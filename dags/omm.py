@@ -51,7 +51,7 @@ def populate_inputs(**kwargs):
                 artifact_uri = uri.split('/')[1].strip()
                 sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
                 logging.info('Output is {}'.format(sanitized_artifact_uri))
-                redis.get_conn().set('{}.{}'.format(dag.dag_id, sanitized_artifact_uri))
+                redis.get_conn().set('{}.{}'.format(dag.dag_id, sanitized_artifact_uri), sanitized_artifact_uri)
 
 
 # def op_commands(uri, **kwargs):    
