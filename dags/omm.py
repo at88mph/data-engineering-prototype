@@ -61,6 +61,7 @@ def op_commands(uri, **kwargs):
                 name='airflow-test-pod',            
                 dag=dag)            
 
+start = DummyOperator(task_id='start', dag=dag)
 complete = DummyOperator(task_id='complete', dag=dag)
 
 artifact_uri_array = get_artifact_uris()
@@ -69,4 +70,4 @@ logging.info('Found {} items.'.format(len(artifact_uri_array)))
 # Skip the first item as it's the column header.
 for uri in artifact_uri_array[1:]:
     if uri:
-        op_commands(uri) >> complete
+        start >> op_commands(uri) >> complete
