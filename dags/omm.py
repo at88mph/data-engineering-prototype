@@ -67,14 +67,15 @@ def sub_dag(parent_dag_id, child_dag_id, **kwargs):
     start_sub_dag = DummyOperator(task_id='{}.{}.start'.format(parent_dag_id, sub_dag.dag_id))
     uri_keys = redis.get_conn().scan_iter('{}.*'.format(parent_dag_id))
     for uri_key in uri_keys:
+        decoded_key = uri_key.decode('utf-8')
         task = KubernetesPodOperator(
                  namespace='default',
-                 task_id='{}.{}.{}'.format(parent_dag_id, sub_dag.dag_id, uri_key),
+                 task_id='{}.{}.{}'.format(parent_dag_id, sub_dag.dag_id, decoded_key),
                  image='ubuntu:18.10',
                  in_cluster=True,
                  get_logs=True,
                  cmds=['echo'],
-                 arguments=['{}'.format(uri_key)],
+                 arguments=['{}'.format(decoded_key)],
                  name='airflow-test-pod',            
                  dag=sub_dag)
         task.set_downstream(start_sub_dag)
