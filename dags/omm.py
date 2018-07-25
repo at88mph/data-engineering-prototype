@@ -38,6 +38,7 @@ dag = DAG(dag_id='omm', default_args=default_args, schedule_interval=None)
 
 
 def populate_inputs(**kwargs):
+    logging.info('Populating inputs.')
     query = Variable.get('omm_input_uri_query')
     redis = RedisHook(redis_conn_id='redis_default')
     
@@ -46,6 +47,7 @@ def populate_inputs(**kwargs):
 
     with http_connection.run('/tap/sync?', parse.urlencode(data)) as response:
         arr = response.text.split('\n')
+        logging.info('Found {} items.'.format(len(arr)))
         for uri in arr:
             if uri:                
                 artifact_uri = uri.split('/')[1].strip()
