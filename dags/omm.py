@@ -42,7 +42,7 @@ default_args = {
 
 dag = DAG(dag_id=PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
 
-def populate_inputs(**kwargs):    
+def extract(**kwargs):    
     logging.info('Populating inputs.')
     query = Variable.get('omm_input_uri_query')
     redis = RedisHook(redis_conn_id='redis_default')
@@ -62,14 +62,9 @@ def populate_inputs(**kwargs):
                 logging.info('Output is {}'.format(sanitized_artifact_uri))
                 sanitized_uris.append(sanitized_artifact_uri)
                 time.sleep(3)
-        redis.get_conn().rpush(REDIS_LIST_NAME, *sanitized_uris)
-    
-    logging.info('Sleeping...')
-    time.sleep(3)
+        redis.get_conn().rpush(REDIS_LIST_NAME, *sanitized_uris)    
 
-    return 'Finished inserting {} items into Redis.'.format(count)
-
-def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval, redis_list_name):
+def transform(parent_dag_name, child_dag_name, start_date, schedule_interval, redis_list_name):
     sub_dag = DAG(
       '{}.{}'.format(parent_dag_name, child_dag_name),
       schedule_interval=schedule_interval,
@@ -99,10 +94,8 @@ def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval, redi
 
     return sub_dag
 
-# start = DummyOperator(task_id='start', dag=dag)
-sub_dag_pointer = sub_dag
-start = PythonOperator(task_id='populate_inputs', python_callable=populate_inputs, dag=dag)
-# sub_dag_operator = SubDagOperator(subdag=sub_dag_pointer(PARENT_DAG_NAME, CHILD_DAG_NAME, dag.start_date, dag.schedule_interval, REDIS_LIST_NAME), task_id=CHILD_DAG_NAME, dag=dag)
-complete = DummyOperator(task_id='complete', dag=dag)
+extract_op = PythonOperator(task_id='extract', python_callable=extract, dag=dag)
+# transform_op = SubDagOperator(subdag=transform(PARENT_DAG_NAME, CHILD_DAG_NAME, dag.start_date, dag.schedule_interval, REDIS_LIST_NAME), task_id=CHILD_DAG_NAME, dag=dag)
+load_op = DummyOperator(task_id='complete', dag=dag)
 
-start >> complete
+extract_op >> load_op
