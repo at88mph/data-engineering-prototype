@@ -67,27 +67,28 @@ def extract(**kwargs):
                 sanitized_uris.append(sanitized_artifact_uri)
         redis.get_conn().rpush(redis_key, *sanitized_uris)    
 
-def transform_ops(extract_op, load_op, **kwargs):
+def transform_ops(dag, **kwargs):    
     redis = RedisHook(redis_conn_id='redis_default')
     redis_conn = redis.get_conn()
     logging.info('Looping items.')
     uri_keys = redis_conn.lrange(redis_key, 0, -1)
-    for uri_key in uri_keys:
-        decoded_key = uri_key.decode('utf-8')
-        logging.info('Next key: {}'.format(decoded_key))
-        transform_op = KubernetesPodOperator(
-                namespace='default',
-                task_id='{}.{}'.format(dag.dag_id, decoded_key),
-                image='ubuntu:18.10',
-                in_cluster=True,
-                get_logs=True,
-                cmds=['echo'],
-                arguments=[decoded_key],
-                name='airflow-test-pod',
-                dag=dag)
-        extract_op >> transform_op >> load_op
+    if len(uri_keys) > 0:
+        extract_op = PythonOperator(task_id='extract', python_callable=extract, dag=dag)
+        load_op = DummyOperator(task_id='complete', dag=dag)
+        for uri_key in uri_keys:
+            decoded_key = uri_key.decode('utf-8')
+            logging.info('Next key: {}'.format(decoded_key))
+            transform_op = KubernetesPodOperator(
+                    namespace='default',
+                    task_id='{}.{}'.format(dag.dag_id, decoded_key),
+                    image='ubuntu:18.10',
+                    in_cluster=True,
+                    get_logs=True,
+                    cmds=['echo'],
+                    arguments=[decoded_key],
+                    name='airflow-test-pod',
+                    dag=dag)
+            extract_op >> transform_op >> load_op
 
 with dag:
-    extract_op = PythonOperator(task_id='extract', python_callable=extract, dag=dag)
-    load_op = DummyOperator(task_id='complete', dag=dag)
-    transform_ops(extract_op, load_op)
+    transform_ops(dag)
