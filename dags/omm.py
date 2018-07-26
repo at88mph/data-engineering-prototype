@@ -78,9 +78,14 @@ def print_uris(**kwargs):
         logging.info('Next key: {}'.format(decoded_key))
     return 'Transformed {} items'.format(len(uri_keys))
 
+def load(**kwargs):
+    redis = RedisHook(redis_conn_id='redis_default')
+    redis.get_conn().delete(redis_key)
+    return 'Loaded {}.'.format(redis_key)
+
 with dag:
-    extract_op = PythonOperator(task_id='extract', python_callable=extract, dag=dag)
-    load_op = DummyOperator(task_id='complete', dag=dag)    
+    extract_op = PythonOperator(task_id='extract', python_callable=extract, dag=dag)    
     transform_op = PythonOperator(task_id='transform', python_callable=print_uris, dag=dag)
+    load_op = PythonOperator(task_id='load', python_callable=load, dag=dag)
 
     extract_op >> transform_op >> load_op
