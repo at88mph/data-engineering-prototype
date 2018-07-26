@@ -56,7 +56,7 @@ def populate_inputs(**kwargs):
         logging.info('Found {} items.'.format(count))
         sanitized_uris = []
         for uri in arr[1:]:
-            if uri:                
+            if uri:
                 artifact_uri = uri.split('/')[1].strip()
                 sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
                 logging.info('Output is {}'.format(sanitized_artifact_uri))
@@ -69,11 +69,11 @@ def populate_inputs(**kwargs):
 
     return 'Finished inserting {} items into Redis.'.format(count)
 
-def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval, redis_list_name):   
+def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval, redis_list_name):
     sub_dag = DAG(
       '{}.{}'.format(parent_dag_name, child_dag_name),
       schedule_interval=schedule_interval,
-      start_date=datetime(2019, 11, 25),
+      start_date=datetime(2019, 11, 25)
     )
     redis = RedisHook(redis_conn_id='redis_default')
     redis_conn = redis.get_conn()
@@ -102,7 +102,7 @@ def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval, redi
 # start = DummyOperator(task_id='start', dag=dag)
 sub_dag_pointer = sub_dag
 start = PythonOperator(task_id='populate_inputs', python_callable=populate_inputs, dag=dag)
-sub_dag_operator = SubDagOperator(subdag=sub_dag_pointer(PARENT_DAG_NAME, CHILD_DAG_NAME, dag.start_date, dag.schedule_interval, REDIS_LIST_NAME), task_id=CHILD_DAG_NAME, dag=dag)
+# sub_dag_operator = SubDagOperator(subdag=sub_dag_pointer(PARENT_DAG_NAME, CHILD_DAG_NAME, dag.start_date, dag.schedule_interval, REDIS_LIST_NAME), task_id=CHILD_DAG_NAME, dag=dag)
 complete = DummyOperator(task_id='complete', dag=dag)
 
-start >> sub_dag_operator >> complete
+start >> complete
