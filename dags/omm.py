@@ -65,7 +65,8 @@ def extract(**kwargs):
                 sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
                 logging.info('Output is {}'.format(sanitized_artifact_uri))
                 sanitized_uris.append(sanitized_artifact_uri)
-        redis.get_conn().rpush(redis_key, *sanitized_uris)    
+        redis.get_conn().rpush(redis_key, *sanitized_uris)
+    return 'Extracted {} items'.format(len(sanitized_uris))
 
 def print_uris(**kwargs):    
     redis = RedisHook(redis_conn_id='redis_default')
@@ -75,6 +76,7 @@ def print_uris(**kwargs):
     for uri_key in uri_keys:
         decoded_key = uri_key.decode('utf-8')
         logging.info('Next key: {}'.format(decoded_key))
+    return 'Transformed {} items'.format(len(uri_keys))
 
 with dag:
     extract_op = PythonOperator(task_id='extract', python_callable=extract, dag=dag)
