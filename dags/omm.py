@@ -96,7 +96,7 @@ with dag:
     redis = RedisHook(redis_conn_id='redis_default')
     redis_conn = redis.get_conn()
     logging.info('Looping items.')
-    uri_keys = redis_conn.get(redis_key).split('\n')
+    uri_keys = redis_conn.lrange(redis_key, 0, -1).split('\n')
     for uri_key in uri_keys:
         decoded_key = uri_key.decode('utf-8')
         logging.info('Next key: {}'.format(decoded_key))
