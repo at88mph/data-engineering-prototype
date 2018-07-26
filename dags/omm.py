@@ -51,6 +51,7 @@ def extract(**kwargs):
     count = -1
 
     with http_connection.run('/tap/sync?', parse.urlencode(data)) as response:
+        redis.get_conn().delete(REDIS_LIST_NAME)
         arr = response.text.split('\n')
         count = len(arr)
         logging.info('Found {} items.'.format(count))
