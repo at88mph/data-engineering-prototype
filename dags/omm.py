@@ -31,7 +31,7 @@ docker_image_tag = 'client5'
 
 default_args = {
     'owner': 'airflow',
-    'start_date': datetime(2019, 11, 25),
+    'start_date': airflow.utils.dates.days_ago(2),
     'depends_on_past': False,
     'email_on_failure': False,
     'email_on_retry': False,
@@ -40,7 +40,7 @@ default_args = {
     'provide_context': True
 }
 
-dag = DAG(dag_id=PARENT_DAG_NAME, default_args=default_args, schedule_interval=None)
+dag = DAG(dag_id='{}.{}'.format(PARENT_DAG_NAME, default_args['start_date']), default_args=default_args, schedule_interval=None)
 
 def extract(**kwargs):    
     logging.info('Populating inputs.')
