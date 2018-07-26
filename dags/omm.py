@@ -69,9 +69,9 @@ def extract(**kwargs):
 
 def print_uris(**kwargs):    
     redis = RedisHook(redis_conn_id='redis_default')
-    redis_conn = redis.get_conn()
-    logging.info('Looping items.')
+    redis_conn = redis.get_conn()    
     uri_keys = redis_conn.lrange(redis_key, 0, -1)
+    logging.info('Looping over {} items.'.format(len(uri_keys)))
     for uri_key in uri_keys:
         decoded_key = uri_key.decode('utf-8')
         logging.info('Next key: {}'.format(decoded_key))
