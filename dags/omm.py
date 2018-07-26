@@ -68,7 +68,7 @@ def extract(**kwargs):
         redis.get_conn().rpush(redis_key, *sanitized_uris)    
 
 def transform_op(decoded_key, **kwargs):
-    KubernetesPodOperator(
+    return KubernetesPodOperator(
             namespace='default',
             task_id='{}.{}'.format(dag.dag_id, decoded_key),
             image='ubuntu:18.10',
