@@ -62,7 +62,6 @@ def extract(**kwargs):
                 sanitized_artifact_uri = artifact_uri.replace('+', '_').replace('%', '__')
                 logging.info('Output is {}'.format(sanitized_artifact_uri))
                 sanitized_uris.append(sanitized_artifact_uri)
-                time.sleep(3)
         redis.get_conn().rpush(REDIS_LIST_NAME, *sanitized_uris)    
 
 def transform(parent_dag_name, child_dag_name, start_date, schedule_interval, redis_list_name):
