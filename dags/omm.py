@@ -40,7 +40,7 @@ default_args = {
     'provide_context': True
 }
 
-dag = DAG(dag_id='{}.{}'.format(PARENT_DAG_NAME, default_args['start_date'].isoformat()), default_args=default_args, schedule_interval=None)
+dag = DAG(dag_id='{}.{}'.format(PARENT_DAG_NAME, default_args['start_date'].strftime("%Y-%m-%d_%H_%M_%S")), default_args=default_args, schedule_interval=None)
 
 def extract(**kwargs):    
     logging.info('Populating inputs.')
