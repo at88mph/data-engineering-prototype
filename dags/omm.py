@@ -98,7 +98,7 @@ def extract(**kwargs):
 with dag:
     extract_op = PythonOperator(task_id='extract', python_callable=extract, dag=dag)
     # transform_op = SubDagOperator(subdag=transform(PARENT_DAG_NAME, CHILD_DAG_NAME, dag.start_date, dag.schedule_interval, REDIS_KEY), task_id=CHILD_DAG_NAME, dag=dag)
-    transform_op = RedisKubernetesOperator(REDIS_KEY,
+    transform_op = RedisKubernetesOperator(redis_key=REDIS_KEY,
                     namespace='default',
                     task_id='{}.process_data'.format(dag.dag_id),
                     image='ubuntu:18.10',
