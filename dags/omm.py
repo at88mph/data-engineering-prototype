@@ -43,7 +43,8 @@ default_args = {
 }
 
 dags_volume_mount = VolumeMount('airflow-dags',
-                            mount_path='/root/airflow/dags',                            
+                            mount_path='/root/airflow/dags',
+                            sub_path=None,
                             read_only=True)
 dags_volume_config = {
     'persistentVolumeClaim':
@@ -54,7 +55,8 @@ dags_volume_config = {
 dags_volume = Volume(name='airflow-dags', configs=dags_volume_config)
 
 logs_volume_mount = VolumeMount('airflow-logs',
-                            mount_path='/root/airflow/logs',                            
+                            mount_path='/root/airflow/logs',
+                            sub_path=None,
                             read_only=True)
 logs_volume_config = {
     'persistentVolumeClaim':
