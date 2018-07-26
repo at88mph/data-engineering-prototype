@@ -45,8 +45,8 @@ redis_key = 'omm_{}'.format(dag.dag_id)
 
 def extract(**kwargs):    
     logging.info('Populating inputs.')
-    start_date = dag.start_date
-    end_date = dag.start_date + timedelta(hours=1)
+    # start_date = default_args['start_date']
+    # end_date = default_args['start_date'] + timedelta(hours=1)
     query = Variable.get('omm_input_uri_query')
     redis = RedisHook(redis_conn_id='redis_default')
     data = {'QUERY': query, 'REQUEST': 'doQuery', 'LANG': 'ADQL', 'FORMAT': 'csv'}
