@@ -67,32 +67,7 @@ def extract(**kwargs):
                 sanitized_uris.append(sanitized_artifact_uri)
         redis.get_conn().rpush(redis_key, *sanitized_uris)    
 
-def transform_op(decoded_key, **kwargs):
-    return KubernetesPodOperator(
-            namespace='default',
-            task_id='{}.{}'.format(dag.dag_id, decoded_key),
-            image='ubuntu:18.10',
-            in_cluster=True,
-            get_logs=True,
-            cmds=['echo'],
-            arguments=[decoded_key],
-            name='airflow-test-pod',
-            dag=dag)        
-
-with dag:
-    extract_op = PythonOperator(task_id='extract', python_callable=extract, dag=dag)
-    # transform_op = SubDagOperator(subdag=transform(PARENT_DAG_NAME, CHILD_DAG_NAME, dag.start_date, dag.schedule_interval, REDIS_KEY), task_id=CHILD_DAG_NAME, dag=dag)
-    # transform_op = RedisKubernetesOperator(redis_key=redis_key,
-    #                 namespace='default',
-    #                 task_id='{}.process_data'.format(dag.dag_id),
-    #                 image='ubuntu:18.10',
-    #                 in_cluster=True,
-    #                 get_logs=True,
-    #                 cmds=['echo'],                    
-    #                 name='airflow-test-pod',
-    #                 dag=dag)
-    load_op = DummyOperator(task_id='complete', dag=dag)
-
+def transform_ops(extract_op, load_op, **kwargs):
     redis = RedisHook(redis_conn_id='redis_default')
     redis_conn = redis.get_conn()
     logging.info('Looping items.')
@@ -100,4 +75,19 @@ with dag:
     for uri_key in uri_keys:
         decoded_key = uri_key.decode('utf-8')
         logging.info('Next key: {}'.format(decoded_key))
-        extract_op >> transform_op(decoded_key) >> load_op
+        transform_op = KubernetesPodOperator(
+                namespace='default',
+                task_id='{}.{}'.format(dag.dag_id, decoded_key),
+                image='ubuntu:18.10',
+                in_cluster=True,
+                get_logs=True,
+                cmds=['echo'],
+                arguments=[decoded_key],
+                name='airflow-test-pod',
+                dag=dag)
+        extract_op >> transform_op >> load_op
+
+with dag:
+    extract_op = PythonOperator(task_id='extract', python_callable=extract, dag=dag)
+    load_op = DummyOperator(task_id='complete', dag=dag)
+    transform_ops(extract_op, load_op)
