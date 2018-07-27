@@ -15,7 +15,7 @@ from airflow.models import DAG, Variable
 from datetime import datetime, timedelta
 from urllib import parse, request
 
-
+# FIXME: How to inject a new File URI?  Dynamically create these DAG scripts?
 INPUT_FILE = Variable.get('input_file_uri')
 (_, _, path, _, _, _) = parse(INPUT_FILE)
 PARENT_DAG_NAME = 'omm_dag_{}'.format(path.replace('+', '_').replace('/', '__'))
