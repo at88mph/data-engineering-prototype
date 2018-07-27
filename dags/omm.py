@@ -17,8 +17,8 @@ from urllib import parse, request
 
 # FIXME: How to inject a new File URI?  Dynamically create these DAG scripts?
 INPUT_FILE = Variable.get('input_file_uri')
-_, _, path, _, _, _ = parse(INPUT_FILE)
-PARENT_DAG_NAME = 'omm_dag_{}'.format(path.replace('+', '_').replace('/', '__'))
+parsed_url = parse(INPUT_FILE)
+PARENT_DAG_NAME = 'omm_dag_{}'.format(parsed_url.path.replace('+', '_').replace('/', '__'))
 
 config = {'working_directory': '/root/airflow',
           'resource_id': 'ivo://cadc.nrc.ca/sc2repo',
