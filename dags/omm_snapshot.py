@@ -25,7 +25,7 @@ default_args = {
 }
 
 dag = DAG(dag_id='{}.{}'.format(PARENT_DAG_NAME, default_args['start_date'].strftime(
-    "%Y-%m-%d_%H_%M_%S")), catchup=True, default_args=default_args, schedule_interval='@hourly')
+    "%Y-%m-%d_%H_%M_%S")), catchup=True, default_args=default_args, schedule_interval=None)
 redis_key = dag.dag_id
 
 
