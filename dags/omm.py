@@ -68,19 +68,52 @@ dag = DAG(dag_id='{}.{}'.format(PARENT_DAG_NAME, default_args['start_date'].strf
 with dag:
     start_op = DummyOperator(task_id='start_dag', dag=dag)
 
-    transform_op = KubernetesPodOperator(
+    science_file_op = KubernetesPodOperator(
                 namespace='default',
-                task_id='transform',
+                task_id='transform_science_file',
                 image='ubuntu:18.10',
                 in_cluster=True,
                 get_logs=True,
                 cmds=['echo'],
-                arguments=[INPUT_FILE],
+                arguments=['science_file', INPUT_FILE],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
                 name='airflow-test-pod',
                 dag=dag)
 
+    preview_op = KubernetesPodOperator(
+                namespace='default',
+                task_id='transform_preview',
+                image='ubuntu:18.10',
+                in_cluster=True,
+                get_logs=True,
+                cmds=['echo'],
+                arguments=['preview', INPUT_FILE],
+                volume_mounts=[dags_volume_mount, logs_volume_mount],
+                volumes=[dags_volume, logs_volume],
+                name='airflow-test-pod',
+                dag=dag)
+
+    thumbnail_op = KubernetesPodOperator(
+                namespace='default',
+                task_id='transform_thumbnail',
+                image='ubuntu:18.10',
+                in_cluster=True,
+                get_logs=True,
+                cmds=['echo'],
+                arguments=['thumbnail', INPUT_FILE],
+                volume_mounts=[dags_volume_mount, logs_volume_mount],
+                volumes=[dags_volume, logs_volume],
+                name='airflow-test-pod',
+                dag=dag)                
+
     complete_op = DummyOperator(task_id='complete_dag', dag=dag)
 
-    start_op >> transform_op >> complete_op
+    preview_op.set_upstream(science_file_op)
+    thumbnail_op.set_upstream(science_file_op)
+
+    preview_op.set_downstream(complete_op)
+    thumbnail_op.set_downstream(complete_op)
+    science_file_op.set_upstream(start_op)
+
+    start_op >> science_file_op >> complete_op
