@@ -122,6 +122,8 @@ with dag:
 
     complete_op = DummyOperator(task_id='vlass_complete_dag', dag=dag)
 
+    science_file_op.set_upstream(start_op)
+
     preview_op.set_upstream(science_file_op)
     thumbnail_op.set_upstream(science_file_op)
     noise_op.set_upstream(science_file_op)
@@ -129,6 +131,3 @@ with dag:
     preview_op.set_downstream(complete_op)
     thumbnail_op.set_downstream(complete_op)
     noise_op.set_downstream(complete_op)
-    science_file_op.set_upstream(start_op)
-
-    start_op >> science_file_op >> complete_op

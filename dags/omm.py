@@ -78,7 +78,7 @@ with dag:
                 arguments=['science_file', INPUT_FILE],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
-                name='airflow-science_file-pod',
+                name='airflow-omm_science_file-pod',
                 dag=dag)
 
     preview_op = KubernetesPodOperator(
@@ -91,7 +91,7 @@ with dag:
                 arguments=['preview', INPUT_FILE],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
-                name='airflow-preview-pod',
+                name='airflow-omm_preview-pod',
                 dag=dag)
 
     thumbnail_op = KubernetesPodOperator(
@@ -104,16 +104,15 @@ with dag:
                 arguments=['thumbnail', INPUT_FILE],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
-                name='airflow-thumbnail-pod',
+                name='airflow-omm_thumbnail-pod',
                 dag=dag)                
 
     complete_op = DummyOperator(task_id='omm_complete_dag', dag=dag)
 
+    science_file_op.set_upstream(start_op)
+    
     preview_op.set_upstream(science_file_op)
     thumbnail_op.set_upstream(science_file_op)
 
     preview_op.set_downstream(complete_op)
     thumbnail_op.set_downstream(complete_op)
-    science_file_op.set_upstream(start_op)
-
-    start_op >> science_file_op >> complete_op
