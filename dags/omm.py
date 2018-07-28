@@ -78,7 +78,7 @@ with dag:
                 arguments=['science_file', INPUT_FILE],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
-                name='airflow-test-pod',
+                name='airflow-science_file-pod',
                 dag=dag)
 
     preview_op = KubernetesPodOperator(
@@ -91,7 +91,7 @@ with dag:
                 arguments=['preview', INPUT_FILE],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
-                name='airflow-test-pod',
+                name='airflow-preview-pod',
                 dag=dag)
 
     thumbnail_op = KubernetesPodOperator(
@@ -104,7 +104,7 @@ with dag:
                 arguments=['thumbnail', INPUT_FILE],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
-                name='airflow-test-pod',
+                name='airflow-thumbnail-pod',
                 dag=dag)                
 
     complete_op = DummyOperator(task_id='complete_dag', dag=dag)
