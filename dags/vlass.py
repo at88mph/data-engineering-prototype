@@ -3,6 +3,7 @@ import airflow.settings
 import logging
 import json
 import time
+import re
 
 from airflow.contrib.kubernetes.volume_mount import VolumeMount
 from airflow.contrib.kubernetes.volume import Volume
@@ -18,7 +19,9 @@ from urllib.parse import urlparse
 # FIXME: How to inject a new File URI?  Dynamically create these DAG scripts?
 INPUT_FILE = Variable.get('vlass_input_file_uri')
 parsed_url = urlparse(INPUT_FILE)
-PARENT_DAG_NAME = 'vlass_dag_{}'.format(parsed_url.path.replace('+', '_').replace('/', '__'))
+file_pattern = re.compile('ad:VLASS/(.*)\.image.*', re.IGNORECASE)
+file_pattern_match = file_pattern.match(INPUT_FILE)
+PARENT_DAG_NAME = 'vlass_dag_{}'.format(file_pattern_match.group(0).replace('+', '_').replace('/', '__'))
 
 config = {'working_directory': '/root/airflow',
           'resource_id': 'ivo://cadc.nrc.ca/sc2repo',
