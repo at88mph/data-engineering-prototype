@@ -16,8 +16,10 @@ from airflow.models import DAG, Variable
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
-# FIXME: How to inject a new File URI?  Dynamically create these DAG scripts?
+# FIXME: How to inject a new File URIs?  Dynamically create these DAG scripts?
 INPUT_FILE = Variable.get('vlass_input_file_uri')
+NOISE_FILE = Variable.get('vlass_noise_file_uri')
+
 parsed_url = urlparse(INPUT_FILE)
 file_pattern = re.compile('ad:VLASS/(.*)\.image.*', re.IGNORECASE)
 file_pattern_match = file_pattern.match(INPUT_FILE)
@@ -78,7 +80,7 @@ with dag:
                 in_cluster=True,
                 get_logs=True,
                 cmds=['echo'],
-                arguments=['science_file', INPUT_FILE],
+                arguments=['science_file_{}'.format(INPUT_FILE)],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
                 name='airflow-vlass_science_file-pod',
@@ -91,7 +93,7 @@ with dag:
                 in_cluster=True,
                 get_logs=True,
                 cmds=['echo'],
-                arguments=['noise', INPUT_FILE],
+                arguments=['noise_{}'.format(NOISE_FILE)],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
                 name='airflow-vlass_noise-pod',
@@ -104,7 +106,7 @@ with dag:
                 in_cluster=True,
                 get_logs=True,
                 cmds=['echo'],
-                arguments=['preview', INPUT_FILE],
+                arguments=['preview_{}'.format(INPUT_FILE)],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
                 name='airflow-vlass_preview-pod',
@@ -117,7 +119,7 @@ with dag:
                 in_cluster=True,
                 get_logs=True,
                 cmds=['echo'],
-                arguments=['thumbnail', INPUT_FILE],
+                arguments=['thumbnail_{}'.format(INPUT_FILE)],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
                 name='airflow-vlass_thumbnail-pod',
