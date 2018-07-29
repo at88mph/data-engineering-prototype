@@ -3,6 +3,7 @@ import airflow.settings
 import logging
 import json
 import time
+import re
 
 from airflow.contrib.kubernetes.volume_mount import VolumeMount
 from airflow.contrib.kubernetes.volume import Volume
@@ -18,7 +19,9 @@ from urllib.parse import urlparse
 # FIXME: How to inject a new File URI?  Dynamically create these DAG scripts?
 INPUT_FILE = Variable.get('omm_input_file_uri')
 parsed_url = urlparse(INPUT_FILE)
-PARENT_DAG_NAME = 'omm_dag_{}'.format(parsed_url.path.replace('+', '_').replace('/', '__'))
+file_pattern = re.compile('ad:OMM/(.*)\.fits.gz', re.IGNORECASE)
+file_pattern_match = file_pattern.match(INPUT_FILE)
+PARENT_DAG_NAME = 'omm_dag_{}'.format(file_pattern_match.group(1).replace('+', '_').replace('/', '__'))
 
 config = {'working_directory': '/root/airflow',
           'resource_id': 'ivo://cadc.nrc.ca/sc2repo',
@@ -110,7 +113,7 @@ with dag:
     complete_op = DummyOperator(task_id='omm_complete_dag', dag=dag)
 
     science_file_op.set_upstream(start_op)
-    
+
     preview_op.set_upstream(science_file_op)
     thumbnail_op.set_upstream(science_file_op)
 
