@@ -77,7 +77,7 @@ with dag:
     for i in range(0, Variable.get('max_input_count', default=100)):
         transform_op = KubernetesPodOperator(
                     namespace='default',
-                    task_id='omm-transform',
+                    task_id='omm-transform-{}'.format(i),
                     image='ubuntu:18.10',
                     in_cluster=True,
                     get_logs=True,
@@ -90,7 +90,7 @@ with dag:
 
         preview_thumbnail_op = KubernetesPodOperator(
                     namespace='default',
-                    task_id='omm-transform-preview-thumbnail',
+                    task_id='omm-transform-preview-thumbnail-{}'.format(i),
                     image='ubuntu:18.10',
                     in_cluster=True,
                     get_logs=True,
