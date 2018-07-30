@@ -74,7 +74,7 @@ with dag:
     start_op = DummyOperator(task_id='omm-start-dag', dag=dag)
     complete_op = DummyOperator(task_id='omm-complete-dag', dag=dag)
 
-    for i in range(0, Variable.get('omm_max_input_count')):
+    for i in range(0, int(Variable.get('omm_max_input_count'))):
         transform_op = KubernetesPodOperator(
                     namespace='default',
                     task_id='omm-transform-{}'.format(i),
