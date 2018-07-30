@@ -1,5 +1,4 @@
 import airflow
-import airflow.settings
 import logging
 import json
 import time
@@ -8,6 +7,7 @@ import re
 from airflow.contrib.kubernetes.volume_mount import VolumeMount
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.bash_operator import BashOperator
+from airflow.contrib.sensors.redis_key_sensor import RedisKeySensor
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.models import DAG, Variable
@@ -31,7 +31,7 @@ docker_image_tag = 'client5'
 
 default_args = {
     'owner': 'airflow',
-    'start_date': airflow.utils.dates.days_ago(1),
+    'start_date': datetime(2017, 11, 25),
     'depends_on_past': False,
     'email_on_failure': False,
     'email_on_retry': False,
@@ -50,8 +50,7 @@ logs_volume_mount = VolumeMount('airflow-logs',
                                 sub_path=None,
                                 read_only=True)
 
-dag = DAG(dag_id='{}.{}'.format(PARENT_DAG_NAME, default_args['start_date'].strftime(
-    "%Y-%m-%d_%H_%M_%S")), catchup=True, default_args=default_args, schedule_interval=None)
+dag = DAG(dag_id='{}'.format(PARENT_DAG_NAME), catchup=True, default_args=default_args, schedule_interval=None)
 
 with dag:
     start_op = DummyOperator(task_id='omm_start_dag', dag=dag)
