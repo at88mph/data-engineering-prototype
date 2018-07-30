@@ -58,6 +58,7 @@ with dag:
     extract_op = RedisKeySensor(
             task_id='read_redis',
             redis_conn_id='redis_default',
+            poke_interval=30,
             soft_fail=True,
             dag=dag,
             key=Variable.get('omm_input_uris_key')
