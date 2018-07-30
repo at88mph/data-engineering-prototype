@@ -55,48 +55,41 @@ dag = DAG(dag_id='{}'.format(PARENT_DAG_NAME), catchup=True, default_args=defaul
 with dag:
     start_op = DummyOperator(task_id='omm_start_dag', dag=dag)
 
-    science_file_op = KubernetesPodOperator(
+    extract_op = RedisKeySensor(
+            task_id='read_redis',
+            redis_conn_id='redis_default',
+            dag=dag,
+            key=Variable.get('omm_input_uris_key')
+        )    
+
+    transform_op = KubernetesPodOperator(
                 namespace='default',
-                task_id='omm_transform_science_file',
+                task_id='omm_transform',
                 image='ubuntu:18.10',
                 in_cluster=True,
                 get_logs=True,
                 cmds=['echo'],
                 arguments=['science_file_{}'.format(INPUT_FILE)],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
-                name='airflow-omm_science_file-pod',
+                name='airflow-omm_transform-pod',
                 dag=dag)
 
-    preview_op = KubernetesPodOperator(
+    preview_thumbnail_op = KubernetesPodOperator(
                 namespace='default',
-                task_id='omm_transform_preview',
+                task_id='omm_transform_preview_thumbnail',
                 image='ubuntu:18.10',
                 in_cluster=True,
                 get_logs=True,
                 cmds=['echo'],
-                arguments=['preview_{}'.format(INPUT_FILE)],
+                arguments=['preview_and_thumbnail_{}'.format(INPUT_FILE)],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
-                name='airflow-omm_preview-pod',
-                dag=dag)
-
-    thumbnail_op = KubernetesPodOperator(
-                namespace='default',
-                task_id='omm_transform_thumbnail',
-                image='ubuntu:18.10',
-                in_cluster=True,
-                get_logs=True,
-                cmds=['echo'],
-                arguments=['thumbnail_{}'.format(INPUT_FILE)],
-                volume_mounts=[dags_volume_mount, logs_volume_mount],
-                name='airflow-omm_thumbnail-pod',
-                dag=dag)                
+                name='airflow-omm_preview_thumbnail-pod',
+                dag=dag)             
 
     complete_op = DummyOperator(task_id='omm_complete_dag', dag=dag)
 
-    science_file_op.set_upstream(start_op)
+    extract_op.set_upstream(start_op)
+    transform_op.set_upstream(extract_op)
 
-    preview_op.set_upstream(science_file_op)
-    thumbnail_op.set_upstream(science_file_op)
-
-    preview_op.set_downstream(complete_op)
-    thumbnail_op.set_downstream(complete_op)
+    preview_thumbnail_op.set_upstream(transform_op)
+    preview_thumbnail_op.set_downstream(complete_op)
