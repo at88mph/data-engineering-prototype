@@ -61,6 +61,7 @@ with dag:
     extract_op = RedisKeySensor(
             task_id='read_redis',
             redis_conn_id='redis_default',
+            soft_fail=True,
             dag=dag,
             key=Variable.get('vlass_input_uris_key')
         )    
