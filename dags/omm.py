@@ -77,6 +77,7 @@ with dag:
             task_id='read-redis',
             redis_conn_id='redis_default',
             poke_interval=30,
+            timeout=5,
             soft_fail=True,
             dag=dag,
             key=Variable.get('omm_input_uris_key')
