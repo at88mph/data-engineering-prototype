@@ -22,7 +22,7 @@ INPUT_FILE = Variable.get('vlass_input_file_uri')
 NOISE_FILE = Variable.get('vlass_noise_file_uri')
 
 parsed_url = urlparse(INPUT_FILE)
-file_pattern = re.compile('ad:VLASS/(.*)\.image.*', re.IGNORECASE)
+file_pattern = re.compile('ad:VLASS/(.*)-.*', re.IGNORECASE)
 file_pattern_match = file_pattern.match(INPUT_FILE)
 PARENT_DAG_NAME = 'vlass_dag_{}'.format(file_pattern_match.group(1).replace('+', '_').replace('/', '__'))
 
