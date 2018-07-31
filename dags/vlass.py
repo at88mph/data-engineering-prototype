@@ -7,6 +7,7 @@ import re
 
 from airflow.contrib.kubernetes.volume_mount import VolumeMount
 from airflow.contrib.kubernetes.volume import Volume
+from airflow.contrib.kubernetes.secret import Secret
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.sensors.redis_key_sensor import RedisKeySensor
@@ -31,7 +32,8 @@ config = {'working_directory': '/root/airflow',
           'use_local_files': False,
           'logging_level': 'DEBUG',
           'task_types': 'TaskType.INGEST'}
-docker_image_tag = 'client5'
+
+docker_registry_secret = Secret('volume', '/root/.docker-secret', 'airflow-secrets', '.dockerconfigjson')
 
 default_args = {
     'owner': 'airflow',
@@ -87,6 +89,7 @@ with dag:
                 arguments=[INPUT_FILE, X509_CERT_STRING],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
+                secrets=[docker_registry_secret],
                 name='airflow-vlass_transform-pod',
                 dag=dag)         
 
