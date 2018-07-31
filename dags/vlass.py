@@ -84,7 +84,6 @@ with dag:
                 image='ubuntu:18.10',
                 in_cluster=True,
                 get_logs=True,
-                xcom_push=True,
                 cmds=['echo'],
                 arguments=[INPUT_FILE],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
