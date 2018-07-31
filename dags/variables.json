@@ -1,8 +1,11 @@
 {
   "omm_input_uri_query": "SELECT Artifact.uri FROM caom2.Artifact AS Artifact JOIN caom2.Plane AS Plane ON Artifact.planeID = Plane.planeID JOIN caom2.Observation AS Observation ON Plane.obsID = Observation.obsID WHERE Observation.collection = 'OMM' AND Artifact.uri not like '%jpg' AND Artifact.uri like 'ad:OMM/%' AND Observation.lastModified < '2018-07-01 00:00:00.000' LIMIT 10",
   "vlass_input_file_uri": "ad:VLASS/VLASS1.1.ql.T01t01.J000228-363000.10.2048.v1.I.iter1.image.pbcor.tt0.subim.fits",
+  "vlass_input_file_name": "VLASS1.1.ql.T01t01.J000228-363000.10.2048.v1.I.iter1.image.pbcor.tt0.subim.fits",
   "vlass_noise_file_uri": "ad:VLASS/VLASS1.1.ql.T01t01.J000228-363000.10.2048.v1.I.iter1.image.pbcor.tt0.rms.subim.fits",
+  "vlass_noise_file_name": "VLASS1.1.ql.T01t01.J000228-363000.10.2048.v1.I.iter1.image.pbcor.tt0.rms.subim.fits",
   "omm_input_file_uri": "ad:OMM/C180616_0135_SCI.fits.gz",
+  "omm_input_file_name": "C180616_0135_SCI.fits.gz",
   "omm_input_uris_key": "omm_inputs_20180730",
   "vlass_input_uris_key": "vlass_inputs_20180730"
 }
