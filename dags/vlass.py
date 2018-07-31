@@ -82,6 +82,7 @@ with dag:
                 image='bucket.canfar.net/vlass2caom2',
                 in_cluster=True,
                 get_logs=True,
+                xcom_push=True,
                 cmds=['vlass_run_single'],
                 arguments=[INPUT_FILE, X509_CERT_STRING],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
