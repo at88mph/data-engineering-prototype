@@ -81,7 +81,7 @@ with dag:
     transform_op = KubernetesPodOperator(
                 namespace='default',
                 task_id='vlass-transform',
-                image='ubuntu:18.10',
+                image='bucket.canfar.net/vlass2caom2',
                 in_cluster=True,
                 get_logs=True,
                 cmds=['echo'],
