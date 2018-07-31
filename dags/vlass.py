@@ -15,15 +15,14 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.models import DAG, Variable
 
 from datetime import datetime, timedelta
-from urllib.parse import urlparse
+
 
 # FIXME: How to inject a new File URIs?  Dynamically create these DAG scripts?
 INPUT_FILE = Variable.get('vlass_input_file_name')
 NOISE_FILE = Variable.get('vlass_noise_file_name')
 X509_CERT_STRING = Variable.get('vlass_cert')
 
-parsed_url = urlparse(INPUT_FILE)
-file_pattern = re.compile('ad:VLASS/(.*)-.*', re.IGNORECASE)
+file_pattern = re.compile('VLASS1\.(.*)-.*', re.IGNORECASE)
 file_pattern_match = file_pattern.match(INPUT_FILE)
 PARENT_DAG_NAME = 'vlass_dag_{}'.format(file_pattern_match.group(1).replace('+', '_').replace('/', '__'))
 
