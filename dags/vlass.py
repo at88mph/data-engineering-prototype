@@ -80,7 +80,7 @@ with dag:
 
     transform_op = KubernetesPodOperator(
                 namespace='default',
-                task_id='vlass_transform',
+                task_id='vlass-transform',
                 image='ubuntu:18.10',
                 in_cluster=True,
                 get_logs=True,
@@ -90,7 +90,7 @@ with dag:
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
                 secrets=[docker_registry_secret],
-                name='airflow-vlass_transform-pod',
+                name='airflow-vlass-transform-pod',
                 dag=dag)         
 
     complete_op = DummyOperator(task_id='vlass_complete_dag', dag=dag)
