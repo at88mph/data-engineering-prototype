@@ -33,7 +33,7 @@ config = {'working_directory': '/root/airflow',
           'logging_level': 'DEBUG',
           'task_types': 'TaskType.INGEST'}
 
-docker_registry_secret = Secret('volume', '/root/.docker-secret', 'airflow-secrets', '.dockerconfigjson')
+docker_registry_secret = Secret('volume', '/root/.docker/config.json', 'airflow-secrets', '.dockerconfigjson')
 
 default_args = {
     'owner': 'airflow',
