@@ -18,8 +18,9 @@ from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
 # FIXME: How to inject a new File URIs?  Dynamically create these DAG scripts?
-INPUT_FILE = Variable.get('vlass_input_file_uri')
-NOISE_FILE = Variable.get('vlass_noise_file_uri')
+INPUT_FILE = Variable.get('vlass_input_file_name')
+NOISE_FILE = Variable.get('vlass_noise_file_name')
+X509_CERT_STRING = Variable.get('vlass_cert')
 
 parsed_url = urlparse(INPUT_FILE)
 file_pattern = re.compile('ad:VLASS/(.*)-.*', re.IGNORECASE)
@@ -76,24 +77,14 @@ dag = DAG(dag_id='{}'.format(PARENT_DAG_NAME), catchup=True, default_args=defaul
 with dag:
     start_op = DummyOperator(task_id='vlass_start_dag', dag=dag)
 
-    extract_op = RedisKeySensor(
-            task_id='read_redis',
-            redis_conn_id='redis_default',
-            poke_interval=30,
-            timeout=5,            
-            soft_fail=True,
-            dag=dag,
-            key=Variable.get('vlass_input_uris_key')
-        )    
-
     transform_op = KubernetesPodOperator(
                 namespace='default',
                 task_id='vlass_transform',
-                image='ubuntu:18.10',
+                image='bucket.canfar.net/vlass2caom2',
                 in_cluster=True,
                 get_logs=True,
-                cmds=['echo'],
-                arguments=['science_file_{}'.format(INPUT_FILE)],
+                cmds=['vlass_run_single'],
+                arguments=[INPUT_FILE, X509_CERT_STRING],
                 volume_mounts=[dags_volume_mount, logs_volume_mount],
                 volumes=[dags_volume, logs_volume],
                 name='airflow-vlass_transform-pod',
@@ -101,6 +92,4 @@ with dag:
 
     complete_op = DummyOperator(task_id='vlass_complete_dag', dag=dag)
 
-    extract_op.set_upstream(start_op)
-    transform_op.set_upstream(extract_op)
-    transform_op.set_downstream(complete_op)
+    start_op >> transform_op >> complete_op
