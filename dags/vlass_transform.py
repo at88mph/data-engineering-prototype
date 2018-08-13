@@ -14,19 +14,9 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.sensors.redis_key_sensor import RedisKeySensor
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.models import DAG, Variable, Connection
+from airflow.models import DAG, Connection
 
 from datetime import datetime, timedelta
-
-
-# FIXME: How to inject a new File URIs?  Dynamically create these DAG scripts?
-INPUT_FILE = Variable.get('vlass_input_file_name')
-NOISE_FILE = Variable.get('vlass_noise_file_name')
-X509_CERT_STRING = Variable.get('vlass_cert')
-
-file_pattern = re.compile('VLASS1\.(.*)-.*', re.IGNORECASE)
-file_pattern_match = file_pattern.match(INPUT_FILE)
-PARENT_DAG_NAME = 'vlass_dag_{}'.format(file_pattern_match.group(1).replace('+', '_').replace('/', '__'))
 
 config = {'working_directory': '/root/airflow',
           'resource_id': 'ivo://cadc.nrc.ca/sc2repo',
@@ -70,7 +60,7 @@ def get_caom_command(file_name, count):
     return KubernetesPodOperator(
                 namespace='default',
                 task_id='vlass-transform-{}'.format(count),
-                image='bucket.canfar.net/vlass2caom2',
+                image='opencadc/vlass2caom2',
                 in_cluster=True,
                 get_logs=True,
                 cmds=['vlass_run_single'],
