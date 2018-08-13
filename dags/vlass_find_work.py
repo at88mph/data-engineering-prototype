@@ -1,8 +1,7 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
+from airflow.contrib.hooks.redis_hook import RedisHook
 from datetime import datetime, timedelta
-
-import redis
 
 default_args = {
     'owner': 'airflow',
@@ -14,6 +13,8 @@ default_args = {
     'retries': 1,
     'retry_delay': timedelta(minutes=5)
 }
+
+redis_hook = RedisHook(redis_conn_id='redis_default')
 
 # TODO - when deploying to have this actually run, catchup=True!!!!!
 # and schedule_interval=timedelta(hours=1)
@@ -46,11 +47,10 @@ def query_vlass(ds, **kwargs):
 
 
 def cache_query_result(**context):
-    redis_conn = redis.StrictRedis()
     results = context['task_instance'].xcom_pull('vlass_periodic_query')
     import logging
     logging.error(results)
-    redis_conn.set('test_key', results)
+    redis_hook.get_conn().set('test_key', results)
 
 
 t1 = PythonOperator(task_id='vlass_periodic_query',

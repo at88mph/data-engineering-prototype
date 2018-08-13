@@ -4,7 +4,6 @@ import logging
 import json
 import time
 import re
-import redis
 
 from airflow.contrib.kubernetes.volume_mount import VolumeMount
 from airflow.contrib.kubernetes.volume import Volume
@@ -13,6 +12,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.sensors.redis_key_sensor import RedisKeySensor
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
+from airflow.contrib.hooks.redis_hook import RedisHook
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.models import DAG, Connection
 
@@ -28,6 +28,9 @@ args={
     'start_date': datetime.utcnow(),
     'owner': 'airflow',
 }
+
+auth_conn = Connection('test_netrc')
+redis_hook = RedisHook(redis_conn_id='redis_default')
 
 dag = DAG(
     dag_id='vlass_execute',
@@ -45,16 +48,12 @@ end_task = DummyOperator(task_id='end_task', dag=dag)
 
 
 def get_file_names():
-    redis_conn = redis.StrictRedis()
-    results = redis_conn.get('test_key')
+    results = redis_hook.get_conn().get('test_key')
     if results is not None:
         file_name_list = results.decode('utf-8').split()[1:]
         return file_name_list
     else:
         return []
-
-
-conn = Connection('test_netrc')
 
 def get_caom_command(file_name, count):
     return KubernetesPodOperator(
@@ -64,7 +63,7 @@ def get_caom_command(file_name, count):
                 in_cluster=True,
                 get_logs=True,
                 cmds=['vlass_run_single'],
-                arguments=[file_name, conn.extra],
+                arguments=[file_name, auth_conn.extra],
                 name='airflow-vlass-transform-pod',
                 dag=dag)
 
