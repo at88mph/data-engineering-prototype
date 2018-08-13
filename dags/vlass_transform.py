@@ -26,6 +26,7 @@ config = {'working_directory': '/root/airflow',
 
 args={
     'start_date': datetime.utcnow(),
+    'provide_context': True,
     'owner': 'airflow',
 }
 
