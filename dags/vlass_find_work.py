@@ -22,7 +22,7 @@ redis_hook = RedisHook(redis_conn_id='redis_default')
 
 vlass_find_work = DAG('vlass_find_work', default_args=default_args,
                       catchup=True,
-                      schedule_interval='@once')
+                      schedule_interval=timedelta(hours=1))
 
 
 # provide_context must be true to get the kwargs values
