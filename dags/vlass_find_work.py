@@ -21,7 +21,7 @@ redis_hook = RedisHook(redis_conn_id='redis_default')
 # and schedule_interval=timedelta(hours=1)
 
 vlass_find_work = DAG('vlass_find_work', default_args=default_args,
-                      catchup=False,
+                      catchup=True,
                       schedule_interval='@once')
 
 
