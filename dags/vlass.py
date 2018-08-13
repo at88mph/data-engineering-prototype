@@ -4,6 +4,7 @@ import logging
 import json
 import time
 import re
+import redis
 
 from airflow.contrib.kubernetes.volume_mount import VolumeMount
 from airflow.contrib.kubernetes.volume import Volume
@@ -13,7 +14,7 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.sensors.redis_key_sensor import RedisKeySensor
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.models import DAG, Variable
+from airflow.models import DAG, Variable, Connection
 
 from datetime import datetime, timedelta
 
@@ -33,65 +34,53 @@ config = {'working_directory': '/root/airflow',
           'logging_level': 'DEBUG',
           'task_types': 'TaskType.INGEST'}
 
-docker_registry_secret = Secret('volume', '/root/.docker/config.json', 'airflow-secrets', '.dockerconfigjson')
-
-default_args = {
+args={
+    'start_date': datetime.utcnow(),
     'owner': 'airflow',
-    'start_date': datetime(2017, 11, 25),
-    'depends_on_past': False,
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 0,
-    'retry_delay': timedelta(minutes=5),
-    'provide_context': True
 }
 
-dags_volume_mount = VolumeMount('airflow-dags',
-                                mount_path='/root/airflow/dags',
-                                sub_path=None,
-                                read_only=True)
+dag = DAG(
+    dag_id='vlass_execute',
+    default_args=args,
+    schedule_interval=None)
 
-dags_volume_config= {
-    'persistentVolumeClaim':
-      {
-        'claimName': 'airflow-dags'
-      }
-    }
-dags_volume = Volume(name='airflow-dags', configs=dags_volume_config)
+sensor = RedisKeySensor(
+    task_id='check_task',
+    redis_conn_id='redis_default',
+    dag=dag,
+    key='test_key')
 
-logs_volume_mount = VolumeMount('airflow-logs',
-                                mount_path='/root/airflow/logs',
-                                sub_path=None,
-                                read_only=True)
-
-logs_volume_config= {
-    'persistentVolumeClaim':
-      {
-        'claimName': 'airflow-logs'
-      }
-    }
-logs_volume = Volume(name='airflow-logs', configs=logs_volume_config)
+start_task = DummyOperator(task_id='start_task', dag=dag)
+end_task = DummyOperator(task_id='end_task', dag=dag)
 
 
-dag = DAG(dag_id='{}'.format(PARENT_DAG_NAME), catchup=True, default_args=default_args, schedule_interval=None)
+def get_file_names():
+    redis_conn = redis.StrictRedis()
+    results = redis_conn.get('test_key')
+    if results is not None:
+        file_name_list = results.decode('utf-8').split()[1:]
+        return file_name_list
+    else:
+        return []
 
-with dag:
-    start_op = DummyOperator(task_id='vlass_start_dag', dag=dag)
 
-    transform_op = KubernetesPodOperator(
+conn = Connection('test_netrc')
+
+def get_caom_command(file_name, count):
+    return KubernetesPodOperator(
                 namespace='default',
-                task_id='vlass-transform',
+                task_id='vlass-transform-{}'.format(count),
                 image='bucket.canfar.net/vlass2caom2',
                 in_cluster=True,
                 get_logs=True,
-                cmds=['echo'],
-                arguments=[INPUT_FILE],
-                volume_mounts=[dags_volume_mount, logs_volume_mount],
-                volumes=[dags_volume, logs_volume],
-                secrets=[docker_registry_secret],
+                cmds=['vlass_run_single'],
+                arguments=[file_name, conn.extra],
                 name='airflow-vlass-transform-pod',
-                dag=dag)         
+                dag=dag)
 
-    complete_op = DummyOperator(task_id='vlass_complete_dag', dag=dag)
 
-    start_op >> transform_op >> complete_op
+counter = 0
+for ii in get_file_names():
+    x = get_caom_command(ii, counter)
+    counter += 1
+    start_task >> x >> end_task

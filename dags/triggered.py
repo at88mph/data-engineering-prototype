@@ -21,6 +21,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.operators.docker_operator import DockerOperator
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.dummy_operator import DummyOperator
+from airflow.contrib.sensors.redis_key_sensor import RedisKeySensor
 from airflow.models import DAG, Connection
 from datetime import datetime
 
@@ -32,31 +33,6 @@ from airflow.contrib.hooks.redis_hook import RedisHook
 from airflow.sensors.base_sensor_operator import BaseSensorOperator
 from airflow.utils.decorators import apply_defaults
 
-
-class RedisKeySensor(BaseSensorOperator):
-    """
-    Checks for the existence of a key in a Redis database
-    """
-    template_fields = ('key',)
-    ui_color = '#f0eee4'
-
-    @apply_defaults
-    def __init__(self, key, redis_conn_id, *args, **kwargs):
-        """
-        Create a new RedisKeySensor
-
-        :param key: The key to be monitored
-        :type key: string
-        :param redis_conn_id: The connection ID to use when connecting to Redis DB.
-        :type redis_conn_id: string
-        """
-        super(RedisKeySensor, self).__init__(*args, **kwargs)
-        self.redis_conn_id = redis_conn_id
-        self.key = key
-
-    def poke(self, context):
-        self.log.info('Sensor check existence of key: %s', self.key)
-        return RedisHook(self.redis_conn_id).key_exists(self.key)
 
 args={
     'start_date': datetime.utcnow(),
