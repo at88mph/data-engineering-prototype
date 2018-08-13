@@ -15,6 +15,7 @@ from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOpera
 from airflow.contrib.hooks.redis_hook import RedisHook
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.models import DAG, Connection
+from airflow.hooks.base_hook import BaseHook
 
 from datetime import datetime, timedelta
 
@@ -30,7 +31,7 @@ args={
     'owner': 'airflow',
 }
 
-auth_conn = Connection('test_netrc')
+auth_conn = BaseHook.get_connection('test_netrc')
 redis_hook = RedisHook(redis_conn_id='redis_default')
 
 dag = DAG(
