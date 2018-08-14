@@ -65,7 +65,7 @@ def get_caom_command(file_name, count):
                 in_cluster=True,
                 get_logs=True,
                 cmds=['vlass_run_single'],
-                arguments=[file_name, auth_conn.extra],
+                arguments=[file_name, "'''{}'''".format(auth_conn.extra)],
                 name='airflow-vlass-transform-pod',
                 dag=dag)
 
