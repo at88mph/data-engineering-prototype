@@ -3,7 +3,6 @@ import airflow.settings
 import logging
 import json
 import time
-import requests
 import re
 
 from airflow.contrib.kubernetes.volume_mount import VolumeMount
@@ -14,6 +13,7 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.contrib.sensors.redis_key_sensor import RedisKeySensor
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 from airflow.contrib.hooks.redis_hook import RedisHook
+from airflow.hooks.http_hook import HttpHook
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.models import DAG, Connection
 from airflow.hooks.base_hook import BaseHook
@@ -32,7 +32,7 @@ args = {
     'owner': 'airflow',
 }
 
-auth_conn = BaseHook.get_connection('test_netrc')
+http_conn = HttpHook('GET', 'test_netrc')
 redis_hook = RedisHook(redis_conn_id='redis_default')
 
 dag = DAG(
@@ -71,8 +71,7 @@ def get_caom_command(file_name, count, certificate):
         name='airflow-vlass-transform-pod',
         dag=dag)
 
-
-with requests.get('http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cred/auth/priv/users/{}'.format(auth_conn.username), auth=(auth_conn.username, auth_conn.password)) as response:
+with http_conn.run('http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cred/auth/priv/users/{}'.format(http_conn.username)) as response:
     cert = response.text
     counter = 0
     for ii in get_file_names():
