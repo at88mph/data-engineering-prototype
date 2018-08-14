@@ -73,7 +73,7 @@ def get_caom_command(file_name, count, certificate):
         dag=dag)
 
 
-with http_conn.run('cred/auth/priv/users/{}'.format(auth_conn.login)) as response:
+with http_conn.run('/cred/auth/priv/users/{}'.format(auth_conn.login)) as response:
     cert = response.text
     counter = 0
     for ii in get_file_names():
