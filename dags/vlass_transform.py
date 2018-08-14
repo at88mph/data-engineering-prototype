@@ -3,6 +3,7 @@ import airflow.settings
 import logging
 import json
 import time
+import requests
 import re
 
 from airflow.contrib.kubernetes.volume_mount import VolumeMount
@@ -25,7 +26,7 @@ config = {'working_directory': '/root/airflow',
           'logging_level': 'DEBUG',
           'task_types': 'TaskType.INGEST'}
 
-args={
+args = {
     'start_date': datetime.utcnow(),
     'provide_context': True,
     'owner': 'airflow',
@@ -57,21 +58,24 @@ def get_file_names():
     else:
         return []
 
-def get_caom_command(file_name, count):
+
+def get_caom_command(file_name, count, certificate):
     return KubernetesPodOperator(
-                namespace='default',
-                task_id='vlass-transform-{}'.format(count),
-                image='opencadc/vlass2caom2',
-                in_cluster=True,
-                get_logs=True,
-                cmds=['vlass_run_single'],
-                arguments=[file_name, "'''{}'''".format(auth_conn.extra)],
-                name='airflow-vlass-transform-pod',
-                dag=dag)
+        namespace='default',
+        task_id='vlass-transform-{}'.format(count),
+        image='opencadc/vlass2caom2',
+        in_cluster=True,
+        get_logs=True,
+        cmds=['vlass_run_single'],
+        arguments=[file_name, "{}".format(certificate)],
+        name='airflow-vlass-transform-pod',
+        dag=dag)
 
 
-counter = 0
-for ii in get_file_names():
-    x = get_caom_command(ii, counter)
-    counter += 1
-    start_task >> x >> end_task
+with requests.get('http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cred/auth/priv/users/{}'.format(auth_conn.username), auth=(auth_conn.username, auth_conn.password)) as response:
+    cert = response.text
+    counter = 0
+    for ii in get_file_names():
+        x = get_caom_command(ii, counter, cert)
+        counter += 1
+        start_task >> x >> end_task
