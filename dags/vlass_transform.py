@@ -32,6 +32,7 @@ args = {
     'owner': 'airflow',
 }
 
+auth_conn = HttpHook.get_connection('test_netrc')
 http_conn = HttpHook('GET', 'test_netrc')
 redis_hook = RedisHook(redis_conn_id='redis_default')
 
@@ -71,7 +72,8 @@ def get_caom_command(file_name, count, certificate):
         name='airflow-vlass-transform-pod',
         dag=dag)
 
-with http_conn.run('http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cred/auth/priv/users/{}'.format(http_conn.username)) as response:
+
+with http_conn.run('http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cred/auth/priv/users/{}'.format(auth_conn.login)) as response:
     cert = response.text
     counter = 0
     for ii in get_file_names():
