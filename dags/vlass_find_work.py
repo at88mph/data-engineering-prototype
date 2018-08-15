@@ -36,6 +36,7 @@ def query_vlass(ds, **kwargs):
     query_meta = "SELECT fileName FROM archive_files WHERE archiveName ='VLASS'" \
                  " AND ingestDate > '{}' and ingestDate <= '{}'".format(
                      prev_date, next_date)
+    logging.info('Query: {}'.format(query_meta))
     data = {'QUERY': query_meta, 'LANG': 'ADQL', 'FORMAT': 'csv'}
 
     with http_conn.run('/ad/auth-sync?{}'.format(parse.urlencode(data))) as response:
