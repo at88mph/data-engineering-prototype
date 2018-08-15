@@ -47,7 +47,7 @@ def query_vlass(ds, **kwargs):
 def cache_query_result(**context):
     results = context['task_instance'].xcom_pull('vlass_periodic_query')
     logging.error(results)
-    redis_hook.get_conn().set('vlass_{}'.format(execution_date.strftime('%Y_%m_%d_%H_%M_%S')), results)
+    redis_hook.get_conn().set('vlass_{}'.format(context['ti'].execution_date.strftime('%Y_%m_%d_%H_%M_%S')), results)
 
 
 t1 = PythonOperator(task_id='vlass_periodic_query',
