@@ -41,23 +41,24 @@ dag = DAG(
     default_args=args,
     schedule_interval=None)
 
-sensor = RedisKeySensor(
-    task_id='check_task',
-    redis_conn_id='redis_default',
-    dag=dag,
-    key='test_key')
-
 start_task = DummyOperator(task_id='start_task', dag=dag)
 end_task = DummyOperator(task_id='end_task', dag=dag)
 
+# provide_context in default_args above must be True to get the kwargs values
+def get_file_names(**kwargs):
+    prev_date = kwargs['prev_execution_date']
+    next_date = kwargs['next_execution_date']
+    redis_conn = redis_hook.get_conn()
+    redis_keys = redis_conn.keys('vlass_*')
+    results = []
 
-def get_file_names():
-    results = redis_hook.get_conn().get('test_key')
-    if results is not None:
-        file_name_list = results.decode('utf-8').split()[1:]
-        return file_name_list
-    else:
-        return []
+    for r in redis_keys:
+        key_datetime = datetime.strptime(r[6:], '%Y_%m_%d_%H_%M_%S')
+        if prev_date < key_datetime < next_date:
+            results.append(redis_conn.get(r).decode('utf-8').split()[1:])
+
+    logging.info('Found {} file names'.format(results))
+    return results
 
 
 def get_caom_command(file_name, count, certificate):
