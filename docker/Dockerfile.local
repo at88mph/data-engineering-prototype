@@ -17,8 +17,11 @@
 
 FROM python:3.6-stretch
 
+ARG AIRFLOW_VERSION
+ARG FORCE_GPL
+ENV VERSION=${AIRFLOW_VERSION:-1.10.0}
 ENV DEBIAN_FRONTEND=noninteractive
-ARG VERSION=1.10.0
+ENV AIRFLOW_GPL_UNIDECODE=${FORCE_GPL:-true}
 
 # install deps
 RUN apt-get update -y && apt-get install -y \

@@ -22,5 +22,4 @@ rm -rf /root/airflow/dags/* && \
 airflow initdb && \
 alembic upgrade heads && \
 (airflow create_user -u airflow -l User -f Airflow -e Dustin.Jenkins@nrc-cnrc.gc.ca -r Admin -p airflow || true) && \
-(airflow create_user -u admin -l Admin -f Airflow -e djenkins.cadc@gmail.com -r Admin -p airflow || true) && \
-echo "retrieved from mount" > /root/test_volume/test.txt
+(airflow create_user -u admin -l Admin -f Airflow -e djenkins.cadc@gmail.com -r Admin -p airflow || true)

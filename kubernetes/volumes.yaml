@@ -66,22 +66,22 @@ spec:
 kind: PersistentVolume
 apiVersion: v1
 metadata:
-  name: test-volume
+  name: cadc-volume
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   capacity:
     storage: 2Gi
   hostPath:
-    path: /mnt/airflow-dags/
+    path: /mnt/data/cadc
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: test-volume
+  name: cadc-volume
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: 2Gi
